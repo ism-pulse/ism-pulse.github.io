@@ -1,0 +1,27 @@
+ISM Quarterly Review Tool
+Copyright 2026 Gaurav Vikash <https://www.linkedin.com/in/gauravvikash/>
+
+This product includes software developed by Gaurav Vikash.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Redistributions (Source or Object form) of this Work, or any Derivative
+Work, must retain this NOTICE file and the attribution of original
+authorship above. See Section 4 of the Apache License 2.0 for the full
+redistribution conditions — in short: keep the copyright, keep this
+NOTICE, and mark any files you have modified.
+
+---
+
+Third-party components bundled or loaded at runtime:
+
+- xlsx-js-style         — MIT Licence, © SheetJS / gitbrent
+- docx.js (dolanmiu)    — MIT Licence, © Dolan Miu
+- pdf.js (Mozilla)      — Apache Licence 2.0, © Mozilla Foundation
+
+Each third-party component retains its own copyright and licence terms.
+This project does not claim authorship of those components.
