@@ -651,8 +651,8 @@
     · <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="noopener">Apache Licence 2.0</a>
     · Free &amp; open-source
   </div>
-  <p>Upload your product's previous-quarter SSP-A, the current-quarter ASD ISM Cloud Controls Matrix, and the ISM Changes PDF. The tool computes the quarterly delta, enriches it with your SSP-A scoping, and presents an interactive review dashboard with downloadable outputs.</p>
-  <p>All processing happens in your browser. Nothing is uploaded anywhere.</p>
+  <p>Upload a product's System Security Plan Annex (SSP-A) spreadsheet, the current-quarter ASD ISM Cloud Controls Matrix (CCM), and the ISM Changes PDF. The tool computes the delta between the CCM and SSP-A, and presents an interactive review dashboard with downloadable outputs.</p>
+  <p>All processing happens in the browser. Nothing is uploaded anywhere.</p>
 </header>
 
 <main id="main-content" tabindex="-1">
@@ -677,10 +677,10 @@
     </div>
   </div>
   <div style="margin-top: 12px;">
-    <label for="product-overview">Product overview (architecture, hosting, key components) — used as context for your triage decisions <span class="req-mark" aria-hidden="true">*</span></label>
+    <label for="product-overview">Product overview (architecture, hosting, key components) — used as context for triage decisions <span class="req-mark" aria-hidden="true">*</span></label>
     <textarea id="product-overview" placeholder="e.g., Azure-hosted multi-tenant SaaS. IRAP accredited to PROTECTED. Describes hosting, identity, monitoring, endpoint protection, key services..." required aria-required="true"></textarea>
   </div>
-  <p class="req-legend"><span class="req-mark">*</span> Required. All three fields must be filled in before you can compute a delta — they are part of the audit trail.</p>
+  <p class="req-legend"><span class="req-mark">*</span> Required. All three values must be provided to compute a delta.</p>
 </section>
 
 <!-- ========== STEP 2: FILE UPLOADS ========== -->
@@ -864,7 +864,7 @@
       <div class="stage inputs">
         <h4>1. Inputs</h4>
         <ul>
-          <li><b>SSP-A</b> (last quarter) — your baseline scoping</li>
+          <li><b>SSP-A</b> (latest available) — your baseline scoping</li>
           <li><b>CCM</b> (this quarter) — the new ASD truth</li>
           <li><b>Changes PDF</b> (this quarter) — for cross-validation and rescission rationale</li>
         </ul>
@@ -893,8 +893,8 @@
   </details>
 
   <details class="method-details">
-    <summary>Assumptions the tool makes about your inputs</summary>
-    <p style="margin: 0 0 8px 0;">The delta and pre-fills rest on a few assumptions about how your SSP-A and the CCM are structured. If any are untrue for your product the output will still look plausible but won't be trustworthy &mdash; worth a glance before you upload.</p>
+    <summary>Assumptions the tool makes about the inputs</summary>
+    <p style="margin: 0 0 8px 0;">The delta and pre-fills rest on a few assumptions about how the SSP-A and the CCM are structured. If any are untrue for your product the output will still look plausible but won't be trustworthy &mdash; worth a glance before you upload.</p>
     <table class="method-table" aria-label="Assumptions the tool makes">
       <thead>
         <tr>
@@ -904,7 +904,7 @@
       </thead>
       <tbody>
         <tr>
-          <td>Your SSP-A lists every ISM control in force when it was last finalised, including rows marked <code>Not Applicable</code>.</td>
+          <td>The SSP-A lists every ISM control in force when it was last finalised, including rows marked <code>Not Applicable</code>.</td>
           <td>If Not-Applicable rows were deleted instead of marked NA, they reappear in the current CCM and get counted as New.</td>
         </tr>
         <tr>
@@ -916,7 +916,7 @@
           <td>Applicability-only changes aren&rsquo;t flagged as Modified. The applicability-drift HINT catches them separately.</td>
         </tr>
         <tr>
-          <td>Your previous-quarter scoping is still valid.</td>
+          <td>The scope of the system and ISM Guidelines has not changed materially since the last SSP-A was finalsied.</td>
           <td>Pre-fills come straight from the baseline SSP-A. After an architectural change, pre-filled Not-Applicable decisions may be stale.</td>
         </tr>
         <tr>
@@ -977,7 +977,7 @@
   <p style="margin: 6px 0 0 0;">
     <span class="privacy-badge"><span class="dot" aria-hidden="true"></span>100% client-side — nothing leaves your browser</span>
   </p>
-  <p style="margin: 8px 0 0 0; font-size: 12.5px; color: var(--text-muted);">The SSP-A, CCM and PDF you upload are processed in-memory. Close or reload the tab and all data is gone. Export the Change Register, Updated SSP-A or Word summary before you leave to keep your triage decisions.</p>
+  <p style="margin: 8px 0 0 0; font-size: 12.5px; color: var(--text-muted);">The SSP-A, CCM and PDF you upload are processed in-memory. All data and processing is lost when a tab is closed or reloaded. Export the Change Register, Updated SSP-A or Word summary before leaving to save your work.</p>
 
   <details class="method-details">
     <summary>Known limitations and edge cases</summary>
@@ -997,7 +997,7 @@
 
 <footer role="contentinfo">
   <div class="foot-row">
-    <span class="brand">ISM Quarterly Review Tool</span>
+    <span class="brand">ISM Pulse - A Quarterly Change Review Tool</span>
     <span class="foot-links">
       <a href="https://www.linkedin.com/in/gauravvikash/" target="_blank" rel="noopener">Built by Gaurav Vikash</a>
       <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="noopener">Apache Licence 2.0</a>
@@ -1008,7 +1008,7 @@
     Single-file, fully client-side. No data leaves your browser. Export the Change Register, Updated SSP-A or Word summary before closing the tab — inline edits are not persisted.
   </p>
   <div class="disclaimer" role="note" aria-label="Disclaimer">
-    <b>Disclaimer &amp; limitation of liability.</b>
+    <b>Disclaimer and limitation of liability.</b>
     This tool is provided on an <b>&ldquo;as is&rdquo;</b> and <b>&ldquo;as available&rdquo;</b> basis, without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, accuracy, completeness, non-infringement and freedom from defects or malicious code. Reasonable efforts have been made to ensure the HTML file and supporting artefacts are free from malware, but the author makes <b>no guarantee</b> to that effect: you are responsible for scanning the files with your own tools before use and for running them inside your own trust boundary. The output of this tool (delta detection, pre-filled scoping, heuristic classifications, cross-validation flags and drafted communications) is a <b>decision-support aid, not professional, legal, compliance, assurance or IRAP advice</b>. You remain solely responsible for reviewing each change, confirming every pre-fill, and ensuring the final artefacts meet your organisation&rsquo;s assurance, accreditation and record-keeping obligations. To the maximum extent permitted by law, <b>in no event shall the author be liable</b> for any direct, indirect, incidental, special, consequential, exemplary or punitive damages, or for any loss of profit, revenue, data, goodwill, assurance status or business interruption, arising out of or in connection with your use of, reliance on, or inability to use this tool, even if advised of the possibility of such damages. Use of this tool constitutes acceptance of these terms.
   </div>
   <p class="fineprint">
