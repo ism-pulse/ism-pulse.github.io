@@ -1,0 +1,21 @@
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Node (only used for the local validation harness — not part of the release)
+node_modules/
+package.json
+package-lock.json
+
+# Office lock files left behind by Excel / Word
+.~lock.*#
+~$*
+
+# Local working files — never publish
+work/
+*.local.*
+*-internal.*
+*-Internal*.md
