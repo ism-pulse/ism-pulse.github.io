@@ -173,7 +173,7 @@ Setup for the Project is documented in
 
 ### Option A — run it from your desktop
 
-1. Download `ISM Quarterly Review Tool.html` from this repo.
+1. Download `index.html` from this repo.
 2. Scan all the files with your organisation's standard tools.
 3. Double-click it. It opens in your default browser.
 4. Fill in Product name, Information Classification and a short Product
@@ -207,7 +207,7 @@ they're invented for demonstration.
 
 ```
 .
-├── ISM Quarterly Review Tool.html   # The tool itself (open in a browser)
+├── index.html                       # The tool itself (open in a browser)
 ├── README.md                        # This file
 ├── VALIDATION.md                    # Validation pack — fixtures, regression harness, known gaps
 ├── LICENSE                          # Apache 2.0 — full licence text
