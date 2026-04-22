@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<!--
+  ISM Pulse — Animated Teaser / Demo Reel
+  ~50-second self-playing loop. Screen-record with Loom / QuickTime / OBS to produce an .mp4.
+
+  This file is a MARKETING ARTEFACT, not the tool. It recreates the ISM Pulse v1.0.1 UI
+  with canned data so the product story can be communicated in a single-file shareable
+  web page. All colours, headings, section numbers, button labels, and card totals are
+  taken from the real tool (index.html @ v1.0.1) so the teaser is honest.
+
+  Copyright 2026 Gaurav Vikash. Apache Licence 2.0.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ISM Pulse — Demo Reel</title>
+<style>
+  /* ---------------------------------------------------------------------
+     Palette — mirrored from the real tool so the teaser feels native.
+  --------------------------------------------------------------------- */
+  :root {
+    --bg-dark: #0a1628;
+    --bg-darker: #05101f;
+    --tool-bg: #f7f8fa;
+    --surface: #ffffff;
+    --border: #dfe3eb;
+    --border-strong: #c5cdd9;
+    --text: #1a202c;
+    --text-muted: #5a6a7f;
+    --primary: #2e75b6;
+    --primary-dark: #1f3864;
+    --accent-new: #c9daf8;
+    --accent-modified: #fce5cd;
+    --accent-rescinded: #ead1dc;
+    --accent-new-bd: #6fa8dc;
+    --accent-modified-bd: #f6b26b;
+    --accent-rescinded-bd: #c27ba0;
+    --accent-action-bd: #cc0000;
+    --accent-monitor-bd: #e69138;
+    --accent-none-bd: #6aa84f;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg-darker);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    color: #fff;
+    min-height: 100vh;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+  }
+
+  /* Outer progress bar */
+  .progress {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 3px; background: rgba(255,255,255,0.06);
+    z-index: 1000;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2e75b6 0%, #c9daf8 100%);
+    width: 0;
+    transition: width 0.1s linear;
+  }
+
+  /* Stage — the 1280x720 "video" canvas */
+  .stage-wrap { position: relative; }
+  .stage {
+    width: 1280px; height: 720px;
+    background: var(--tool-bg);
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+  }
+
+  /* Hint + replay control (not part of the recorded frame) */
+  .hint {
+    position: fixed; bottom: 18px; left: 50%;
+    transform: translateX(-50%);
+    color: #94a3b8; font-size: 12px; letter-spacing: 0.3px;
+    text-align: center; pointer-events: none;
+  }
+  .hint b { color: #e5e7eb; font-weight: 600; }
+  .replay-btn {
+    position: fixed; top: 18px; right: 18px;
+    background: rgba(255,255,255,0.08);
+    color: #e5e7eb; border: 1px solid rgba(255,255,255,0.15);
+    padding: 7px 14px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .replay-btn:hover { background: rgba(255,255,255,0.15); }
+
+  /* Scene base */
+  .scene {
+    position: absolute; inset: 0;
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+  }
+  .scene.active {
+    opacity: 1; visibility: visible;
+  }
+
+  /* ---------------------------------------------------------------------
+     Browser chrome used in tool-mock scenes
+  --------------------------------------------------------------------- */
+  .browser-chrome {
+    height: 38px; background: #e8ebf0;
+    border-bottom: 1px solid var(--border-strong);
+    display: flex; align-items: center; padding: 0 14px; gap: 7px;
+  }
+  .browser-dot { width: 11px; height: 11px; border-radius: 50%; }
+  .browser-dot.red    { background: #ff5f56; }
+  .browser-dot.yellow { background: #ffbd2e; }
+  .browser-dot.green  { background: #27c93f; }
+  .browser-url {
+    flex: 1; background: #fff;
+    height: 24px; border-radius: 12px;
+    margin: 0 0 0 14px; padding: 0 14px;
+    display: flex; align-items: center;
+    font-size: 11px; color: #5a6a7f;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  .browser-url::before {
+    content: "🔒"; margin-right: 8px; font-size: 10px; opacity: 0.7;
+  }
+
+  /* ---------------------------------------------------------------------
+     Tool header (reproduced from real tool)
+  --------------------------------------------------------------------- */
+  .tool-header {
+    background: linear-gradient(135deg, #1f3864 0%, #2e75b6 100%);
+    color: #fff;
+    padding: 20px 32px;
+    position: relative;
+  }
+  .tool-header h1 {
+    margin: 0 0 4px 0;
+    font-size: 22px; font-weight: 600; letter-spacing: -0.2px;
+  }
+  .tool-header .hdr-row {
+    display: flex; flex-wrap: wrap; gap: 8px 16px;
+    align-items: baseline; justify-content: space-between;
+  }
+  .tool-header .byline { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+  .tool-header p {
+    margin: 6px 0 0; opacity: 0.9; font-size: 13px;
+    max-width: 820px;
+  }
+  .self-test-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11.5px; font-weight: 600; letter-spacing: 0.2px;
+    padding: 3px 10px; border-radius: 999px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    transition: all 0.5s ease;
+  }
+  .self-test-pill.pass {
+    background: #1e8449; border-color: #1e8449;
+  }
+  .self-test-pill .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: currentColor;
+  }
+
+  .tool-main { padding: 24px 32px; }
+  .tool-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 6px rgba(0,0,0,0.04);
+    color: var(--text);
+  }
+  .tool-section h2 {
+    margin: 0 0 14px 0; font-size: 15px; font-weight: 600;
+    color: var(--primary-dark); letter-spacing: 0.3px; text-transform: uppercase;
+  }
+
+  /* Form field styling */
+  .field-label {
+    font-size: 12px; font-weight: 600; color: var(--text-muted);
+    margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .field-input {
+    width: 100%; padding: 8px 10px;
+    border: 1px solid var(--border-strong); border-radius: 6px;
+    background: #fff; font-size: 13px; color: var(--text);
+    min-height: 36px; display: flex; align-items: center;
+    position: relative;
+  }
+  .field-input .caret {
+    display: inline-block; width: 1px; height: 14px;
+    background: var(--primary); margin-left: 1px;
+    animation: blink 0.8s step-end infinite;
+  }
+  @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+
+  .step-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+
+  /* ---------------------------------------------------------------------
+     SCENE 1 — Title
+  --------------------------------------------------------------------- */
+  .scene-title {
+    background: radial-gradient(circle at 50% 45%, #1f3864 0%, #0a1628 70%);
+    color: #fff;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+  }
+  .scene-title::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 30% 20%, rgba(46,117,182,0.25) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(201,218,248,0.15) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .title-logo {
+    font-size: 96px; font-weight: 700; letter-spacing: -3px;
+    background: linear-gradient(135deg, #ffffff 0%, #c9daf8 50%, #6fa8dc 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    margin: 0;
+    position: relative; z-index: 1;
+  }
+  .title-sub {
+    font-size: 24px; color: #c9daf8;
+    margin-top: 14px; font-weight: 400;
+    letter-spacing: 0.2px;
+    position: relative; z-index: 1;
+  }
+  .title-tag {
+    font-size: 16px; color: rgba(255,255,255,0.7);
+    margin-top: 28px; font-weight: 500;
+    padding: 8px 20px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.04);
+    position: relative; z-index: 1;
+  }
+
+  .scene-title.active .title-logo { animation: titleIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) both; }
+  .scene-title.active .title-sub  { animation: titleIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s both; }
+  .scene-title.active .title-tag  { animation: titleIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.7s both; }
+
+  @keyframes titleIn {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---------------------------------------------------------------------
+     SCENE 2 — Problem
+  --------------------------------------------------------------------- */
+  .scene-problem {
+    background: linear-gradient(180deg, #0a1628 0%, #050a14 100%);
+    color: #e5e7eb;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 0 120px;
+    text-align: center;
+  }
+  .problem-line {
+    font-size: 36px; font-weight: 600; line-height: 1.3;
+    max-width: 900px;
+    opacity: 0;
+  }
+  .problem-line.highlight { color: #fde68a; }
+  .problem-line.bad { color: #fca5a5; }
+  .scene-problem.active .problem-line.l1 { animation: fadeSlide 0.7s 0.2s forwards; }
+  .scene-problem.active .problem-line.l2 { animation: fadeSlide 0.7s 1.9s forwards; }
+  .scene-problem.active .problem-line.l3 { animation: fadeSlide 0.7s 3.6s forwards; }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---------------------------------------------------------------------
+     SCENE 3 — Promise
+  --------------------------------------------------------------------- */
+  .scene-promise {
+    background: radial-gradient(circle at 50% 50%, #1f3864 0%, #0a1628 70%);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .promise-line {
+    font-size: 72px; font-weight: 700;
+    background: linear-gradient(135deg, #ffffff 0%, #c9daf8 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -1.5px;
+    opacity: 0;
+  }
+  .scene-promise.active .promise-line {
+    animation: promiseIn 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  @keyframes promiseIn {
+    from { opacity: 0; transform: scale(0.85); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  /* ---------------------------------------------------------------------
+     SCENE 4 — Tool / Product Details auto-filling
+  --------------------------------------------------------------------- */
+  .typed-text { display: inline; }
+  .field-input.filled { border-color: var(--primary); background: #f8fbff; }
+
+  .scene-tool.active .self-test-pill {
+    animation: selfTestGo 0.8s ease-in 2.5s forwards;
+  }
+  @keyframes selfTestGo {
+    from { background: rgba(255,255,255,0.12); }
+    to   { background: #1e8449; border-color: #1e8449; }
+  }
+
+  .scene-tool.active .typed-name    { animation: typeWidth 1.4s steps(22) 0.3s both; }
+  .scene-tool.active .typed-class   { animation: fadeIn 0.3s 2.0s both; }
+  .scene-tool.active .typed-overview{ animation: typeWidth 2.2s steps(60) 2.5s both; }
+
+  @keyframes typeWidth {
+    from { max-width: 0; }
+    to   { max-width: 100%; }
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .typed {
+    display: inline-block; overflow: hidden; white-space: nowrap;
+    vertical-align: bottom; max-width: 0;
+  }
+
+  /* ---------------------------------------------------------------------
+     SCENE 5 — File uploads
+  --------------------------------------------------------------------- */
+  .file-row {
+    display: flex; align-items: center; gap: 16px;
+    padding: 12px 14px;
+    border: 1px dashed var(--border-strong);
+    background: #fafbfc;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  .file-row.loaded {
+    border-color: #128a5a; border-style: solid;
+    background: #eefbf5;
+  }
+  .file-row .file-icon {
+    width: 36px; height: 44px;
+    background: #fff;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: var(--primary-dark);
+    position: relative; flex: 0 0 36px;
+  }
+  .file-row .file-icon::after {
+    content: ""; position: absolute; top: 0; right: 0;
+    width: 10px; height: 10px;
+    background: linear-gradient(135deg, #e8ebf0 50%, #fff 50%);
+  }
+  .file-row .file-name { flex: 1; font-weight: 500; color: var(--text); }
+  .file-row .file-meta { font-size: 11px; color: var(--text-muted); }
+  .file-row .file-status {
+    margin-left: auto; font-size: 12px; color: #128a5a; font-weight: 600;
+    opacity: 0;
+  }
+  .file-row .file-status::before {
+    content: "✓ "; font-weight: 700;
+  }
+
+  .scene-uploads.active .file-row.r1 { animation: slideIn 0.4s 0.3s forwards, markLoaded 0.1s 0.9s forwards; }
+  .scene-uploads.active .file-row.r2 { animation: slideIn 0.4s 1.2s forwards, markLoaded 0.1s 1.8s forwards; }
+  .scene-uploads.active .file-row.r3 { animation: slideIn 0.4s 2.1s forwards, markLoaded 0.1s 2.7s forwards; }
+  .scene-uploads.active .file-row .file-status { animation: statusFadeIn 0.3s forwards; }
+  .scene-uploads.active .file-row.r1 .file-status { animation-delay: 0.9s; }
+  .scene-uploads.active .file-row.r2 .file-status { animation-delay: 1.8s; }
+  .scene-uploads.active .file-row.r3 .file-status { animation-delay: 2.7s; }
+  .scene-uploads.active .compute-btn { animation: fadeIn 0.4s 3.2s both, pulseBtn 1.2s 3.4s infinite; }
+
+  @keyframes slideIn {
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes markLoaded {
+    to {
+      border-color: #128a5a;
+      border-style: solid;
+      background: #eefbf5;
+    }
+  }
+  @keyframes statusFadeIn { to { opacity: 1; } }
+  @keyframes pulseBtn {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(46,117,182,0.45); }
+    50%      { box-shadow: 0 0 0 14px rgba(46,117,182,0); }
+  }
+
+  .compute-btn {
+    margin-top: 8px;
+    background: var(--primary); color: #fff;
+    padding: 11px 22px; border: none; border-radius: 6px;
+    font-size: 14px; font-weight: 500;
+    display: inline-block; opacity: 0;
+  }
+
+  /* ---------------------------------------------------------------------
+     SCENE 6 — Compute / processing
+  --------------------------------------------------------------------- */
+  .scene-compute {
+    background: var(--tool-bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 0 80px;
+  }
+  .compute-icon {
+    width: 120px; height: 120px;
+    border: 6px solid rgba(46,117,182,0.15);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+  }
+  .scene-compute.active .compute-icon { animation: spin 1.2s linear infinite; }
+  .compute-label {
+    margin-top: 28px;
+    font-size: 18px; font-weight: 600;
+    color: var(--primary-dark);
+  }
+  .compute-sub {
+    margin-top: 6px;
+    font-size: 13px; color: var(--text-muted);
+  }
+  .compute-step {
+    margin-top: 20px;
+    display: grid; gap: 8px;
+    font-size: 13px; color: var(--text-muted);
+  }
+  .compute-step .row { opacity: 0; display: flex; align-items: center; gap: 8px; }
+  .compute-step .row::before {
+    content: "✓"; color: #128a5a; font-weight: 700;
+  }
+  .scene-compute.active .compute-step .row.r1 { animation: fadeIn 0.3s 0.4s forwards; }
+  .scene-compute.active .compute-step .row.r2 { animation: fadeIn 0.3s 1.0s forwards; }
+  .scene-compute.active .compute-step .row.r3 { animation: fadeIn 0.3s 1.6s forwards; }
+  .scene-compute.active .compute-step .row.r4 { animation: fadeIn 0.3s 2.2s forwards; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------------------------------------------------------------------
+     SCENE 7 — Dashboard (change register cards)
+  --------------------------------------------------------------------- */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 18px;
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  .card.accent-new       { border-left: 4px solid var(--accent-new-bd); }
+  .card.accent-modified  { border-left: 4px solid var(--accent-modified-bd); }
+  .card.accent-rescinded { border-left: 4px solid var(--accent-rescinded-bd); }
+  .card.accent-action    { border-left: 4px solid var(--accent-action-bd); }
+  .card.accent-monitor   { border-left: 4px solid var(--accent-monitor-bd); }
+  .card.accent-none      { border-left: 4px solid var(--accent-none-bd); }
+  .card .value {
+    font-size: 34px; font-weight: 700;
+    color: var(--primary-dark); line-height: 1;
+  }
+  .card .label {
+    font-size: 11px; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.4px;
+    margin-top: 6px; font-weight: 500;
+  }
+  .scene-dashboard.active .card.c1 { animation: cardIn 0.5s 0.2s forwards; }
+  .scene-dashboard.active .card.c2 { animation: cardIn 0.5s 0.35s forwards; }
+  .scene-dashboard.active .card.c3 { animation: cardIn 0.5s 0.50s forwards; }
+  .scene-dashboard.active .card.c4 { animation: cardIn 0.5s 0.75s forwards; }
+  .scene-dashboard.active .card.c5 { animation: cardIn 0.5s 0.90s forwards; }
+  .scene-dashboard.active .card.c6 { animation: cardIn 0.5s 1.05s forwards; }
+  @keyframes cardIn { to { opacity: 1; transform: translateY(0); } }
+
+  /* Register table preview */
+  .register {
+    margin-top: 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    overflow: hidden;
+    opacity: 0;
+  }
+  .scene-dashboard.active .register { animation: fadeIn 0.6s 1.5s forwards; }
+  .register-head {
+    background: var(--primary-dark); color: #fff;
+    padding: 10px 16px; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.4px; text-transform: uppercase;
+    display: grid; grid-template-columns: 90px 1fr 110px 120px 110px;
+    gap: 16px;
+  }
+  .register-row {
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    display: grid; grid-template-columns: 90px 1fr 110px 120px 110px;
+    gap: 16px; align-items: center;
+  }
+  .register-row:first-of-type { border-top: none; }
+  .chip {
+    display: inline-block;
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 600;
+  }
+  .chip.new       { background: var(--accent-new); color: var(--primary-dark); }
+  .chip.modified  { background: var(--accent-modified); color: #7a4e0f; }
+  .chip.rescinded { background: var(--accent-rescinded); color: #6b2e52; }
+  .chip.action    { background: #fce7e7; color: #8b1a1a; }
+  .chip.monitor   { background: #fff2cc; color: #7a4e0f; }
+  .chip.none      { background: #d9ead3; color: #274e13; }
+  .ctrl-id { font-family: ui-monospace, Menlo, monospace; color: var(--primary-dark); font-weight: 600; }
+
+  /* ---------------------------------------------------------------------
+     SCENE 8 — Exports
+  --------------------------------------------------------------------- */
+  .scene-exports {
+    background: var(--tool-bg);
+    padding: 60px 100px;
+  }
+  .export-title {
+    font-size: 14px; font-weight: 600;
+    color: var(--primary-dark); text-transform: uppercase;
+    letter-spacing: 0.4px; margin-bottom: 20px;
+    opacity: 0;
+  }
+  .export-buttons {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    margin-bottom: 32px;
+  }
+  .export-btn {
+    background: #fff;
+    border: 1px solid var(--primary);
+    color: var(--primary-dark);
+    border-radius: 6px;
+    padding: 16px 14px;
+    font-size: 14px; font-weight: 600;
+    display: flex; align-items: center; gap: 10px;
+    opacity: 0;
+  }
+  .export-btn .icon { font-size: 22px; }
+  .scene-exports.active .export-title            { animation: fadeIn 0.4s 0.2s forwards; }
+  .scene-exports.active .export-btn.e1          { animation: slideIn 0.4s 0.6s forwards; }
+  .scene-exports.active .export-btn.e2          { animation: slideIn 0.4s 0.85s forwards; }
+  .scene-exports.active .export-btn.e3          { animation: slideIn 0.4s 1.10s forwards; }
+  .scene-exports.active .export-btn.e4          { animation: slideIn 0.4s 1.35s forwards; }
+
+  .downloads-title {
+    font-size: 14px; font-weight: 600;
+    color: var(--primary-dark); text-transform: uppercase;
+    letter-spacing: 0.4px; margin: 16px 0 14px;
+    opacity: 0;
+  }
+  .scene-exports.active .downloads-title         { animation: fadeIn 0.4s 1.8s forwards; }
+  .downloads {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+  }
+  .download-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    display: flex; gap: 14px; align-items: center;
+    opacity: 0;
+  }
+  .download-card .big-icon {
+    width: 44px; height: 54px;
+    background: linear-gradient(135deg, #fff 0%, #f0f4f8 100%);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px; position: relative; flex: 0 0 44px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: var(--primary-dark);
+  }
+  .download-card .big-icon.xlsx { color: #0f5c2e; }
+  .download-card .big-icon.docx { color: #1f3864; }
+  .download-card .big-icon::after {
+    content: ""; position: absolute; top: 0; right: 0;
+    width: 12px; height: 12px;
+    background: linear-gradient(135deg, #d8dde5 50%, transparent 50%);
+  }
+  .download-card .dc-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .download-card .dc-sub  { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .scene-exports.active .download-card.d1 { animation: dropIn 0.5s 2.2s forwards; }
+  .scene-exports.active .download-card.d2 { animation: dropIn 0.5s 2.5s forwards; }
+  .scene-exports.active .download-card.d3 { animation: dropIn 0.5s 2.8s forwards; }
+
+  @keyframes dropIn {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---------------------------------------------------------------------
+     SCENE 9 — Close
+  --------------------------------------------------------------------- */
+  .scene-close {
+    background: radial-gradient(circle at 50% 45%, #1f3864 0%, #0a1628 70%);
+    color: #fff;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+  }
+  .close-logo {
+    font-size: 84px; font-weight: 700; letter-spacing: -2.5px;
+    background: linear-gradient(135deg, #ffffff 0%, #c9daf8 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0;
+  }
+  .close-cta {
+    margin-top: 20px;
+    font-size: 22px; color: #c9daf8; font-weight: 500;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    padding: 10px 24px;
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.06);
+    opacity: 0;
+  }
+  .close-meta {
+    margin-top: 36px;
+    font-size: 13px; color: rgba(255,255,255,0.65);
+    opacity: 0;
+  }
+  .close-meta b { color: rgba(255,255,255,0.9); }
+  .close-meta a { color: #c9daf8; text-decoration: underline; text-underline-offset: 2px; }
+
+  .scene-close.active .close-logo { animation: fadeSlide 0.8s 0.2s forwards; }
+  .scene-close.active .close-cta  { animation: fadeSlide 0.8s 0.9s forwards; }
+  .scene-close.active .close-meta { animation: fadeSlide 0.8s 1.5s forwards; }
+
+  /* ---------------------------------------------------------------------
+     Shared animation playback control — we reset animations on scene
+     change by toggling .active, which forces CSS to re-evaluate.
+  --------------------------------------------------------------------- */
+  .scene:not(.active) .card,
+  .scene:not(.active) .file-row,
+  .scene:not(.active) .export-btn,
+  .scene:not(.active) .download-card,
+  .scene:not(.active) .downloads-title,
+  .scene:not(.active) .export-title,
+  .scene:not(.active) .problem-line,
+  .scene:not(.active) .promise-line,
+  .scene:not(.active) .compute-step .row,
+  .scene:not(.active) .close-logo,
+  .scene:not(.active) .close-cta,
+  .scene:not(.active) .close-meta,
+  .scene:not(.active) .title-logo,
+  .scene:not(.active) .title-sub,
+  .scene:not(.active) .title-tag {
+    animation: none !important;
+    opacity: 0;
+  }
+  .scene:not(.active) .typed {
+    max-width: 0 !important;
+  }
+
+  /* Scaled display for smaller screens */
+  @media (max-width: 1320px) {
+    .stage-wrap { transform: scale(0.85); }
+  }
+  @media (max-width: 1100px) {
+    .stage-wrap { transform: scale(0.70); }
+  }
+  @media (max-width: 900px) {
+    .stage-wrap { transform: scale(0.55); }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress"><div class="progress-fill" id="progress-fill"></div></div>
+
+<div class="stage-wrap">
+<div class="stage">
+
+  <!-- ===================== SCENE 1: TITLE ===================== -->
+  <div class="scene scene-title active" data-scene="0">
+    <h1 class="title-logo">ISM Pulse</h1>
+    <div class="title-sub">Quarterly ISM reviews, done right.</div>
+    <div class="title-tag">Nothing leaves your browser.</div>
+  </div>
+
+  <!-- ===================== SCENE 2: PROBLEM ===================== -->
+  <div class="scene scene-problem" data-scene="1">
+    <div class="problem-line l1">Every quarter, ASD updates the ISM.</div>
+    <div class="problem-line l2 highlight" style="margin-top: 32px;">
+      Someone has to read every change, decide what matters for <i>your</i> system, and update every plan and register.
+    </div>
+    <div class="problem-line l3 bad" style="margin-top: 32px;">
+      That's a week of senior analyst time.
+    </div>
+  </div>
+
+  <!-- ===================== SCENE 3: PROMISE ===================== -->
+  <div class="scene scene-promise" data-scene="2">
+    <div class="promise-line">Do it in minutes.</div>
+  </div>
+
+  <!-- ===================== SCENE 4: TOOL (product details) ===================== -->
+  <div class="scene scene-tool" data-scene="3">
+    <div class="browser-chrome">
+      <span class="browser-dot red"></span>
+      <span class="browser-dot yellow"></span>
+      <span class="browser-dot green"></span>
+      <div class="browser-url">ism-pulse.github.io</div>
+    </div>
+    <div class="tool-header">
+      <div class="hdr-row">
+        <h1>ISM Pulse - A Quarterly Change Review Tool</h1>
+        <span class="self-test-pill">
+          <span class="dot"></span>
+          <span>Self-test · PASS</span>
+        </span>
+      </div>
+      <p>All processing happens in the browser. Nothing is uploaded anywhere.</p>
+    </div>
+    <div class="tool-main">
+      <div class="tool-section">
+        <h2>1. Product details</h2>
+        <div class="step-grid">
+          <div>
+            <div class="field-label">Product name *</div>
+            <div class="field-input">
+              <span class="typed typed-name">Orion Analytics Platform</span><span class="caret"></span>
+            </div>
+          </div>
+          <div>
+            <div class="field-label">Information Classification *</div>
+            <div class="field-input">
+              <span class="typed-class" style="opacity:0">PROTECTED</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top: 14px;">
+          <div class="field-label">Product overview *</div>
+          <div class="field-input" style="min-height: 48px;">
+            <span class="typed typed-overview">Azure-hosted multi-tenant SaaS. IRAP to PROTECTED. Entra identity, Sentinel monitoring.</span><span class="caret"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== SCENE 5: UPLOADS ===================== -->
+  <div class="scene scene-uploads" data-scene="4">
+    <div class="browser-chrome">
+      <span class="browser-dot red"></span>
+      <span class="browser-dot yellow"></span>
+      <span class="browser-dot green"></span>
+      <div class="browser-url">ism-pulse.github.io</div>
+    </div>
+    <div class="tool-header">
+      <div class="hdr-row">
+        <h1>ISM Pulse - A Quarterly Change Review Tool</h1>
+        <span class="self-test-pill pass">
+          <span class="dot"></span>
+          <span>Self-test · PASS</span>
+        </span>
+      </div>
+    </div>
+    <div class="tool-main">
+      <div class="tool-section">
+        <h2>2. Upload inputs</h2>
+        <div class="file-row r1">
+          <div class="file-icon">xlsx</div>
+          <div>
+            <div class="file-name">Product SSP-A — previous-quarter baseline</div>
+            <div class="file-meta">Orion-SSP-A-Dec-2025.xlsx · 184 KB</div>
+          </div>
+          <div class="file-status">Loaded</div>
+        </div>
+        <div class="file-row r2">
+          <div class="file-icon">xlsx</div>
+          <div>
+            <div class="file-name">Current-quarter Cloud Controls Matrix</div>
+            <div class="file-meta">ISM-CCM-Mar-2026.xlsx · 2.1 MB</div>
+          </div>
+          <div class="file-status">Loaded</div>
+        </div>
+        <div class="file-row r3">
+          <div class="file-icon">pdf</div>
+          <div>
+            <div class="file-name">ISM Changes PDF</div>
+            <div class="file-meta">ISM-Changes-Mar-2026.pdf · 680 KB</div>
+          </div>
+          <div class="file-status">Loaded</div>
+        </div>
+        <button class="compute-btn">Compute delta →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== SCENE 6: COMPUTE ===================== -->
+  <div class="scene scene-compute" data-scene="5">
+    <div class="compute-icon"></div>
+    <div class="compute-label">Computing delta…</div>
+    <div class="compute-sub">Everything runs locally. No network calls.</div>
+    <div class="compute-step">
+      <div class="row r1">Parsed SSP-A baseline · 312 controls</div>
+      <div class="row r2">Parsed current-quarter CCM · 328 controls</div>
+      <div class="row r3">Cross-validated ISM Changes PDF</div>
+      <div class="row r4">Detected possible rescission + re-issue pairs</div>
+    </div>
+  </div>
+
+  <!-- ===================== SCENE 7: DASHBOARD ===================== -->
+  <div class="scene scene-dashboard" data-scene="6">
+    <div class="browser-chrome">
+      <span class="browser-dot red"></span>
+      <span class="browser-dot yellow"></span>
+      <span class="browser-dot green"></span>
+      <div class="browser-url">ism-pulse.github.io</div>
+    </div>
+    <div class="tool-header">
+      <div class="hdr-row">
+        <h1>ISM Pulse - A Quarterly Change Review Tool</h1>
+        <span class="self-test-pill pass">
+          <span class="dot"></span>
+          <span>Self-test · PASS</span>
+        </span>
+      </div>
+    </div>
+    <div class="tool-main">
+      <div class="tool-section" style="padding: 18px 24px;">
+        <h2>3. Change register</h2>
+        <div class="cards">
+          <div class="card c1 accent-new"><div class="value">16</div><div class="label">New</div></div>
+          <div class="card c2 accent-modified"><div class="value">58</div><div class="label">Modified</div></div>
+          <div class="card c3 accent-rescinded"><div class="value">4</div><div class="label">Rescinded</div></div>
+          <div class="card c4 accent-action"><div class="value">8</div><div class="label">Action required</div></div>
+          <div class="card c5 accent-monitor"><div class="value">42</div><div class="label">Monitor</div></div>
+          <div class="card c6 accent-none"><div class="value">28</div><div class="label">No action</div></div>
+        </div>
+        <div class="register">
+          <div class="register-head">
+            <div>Control</div>
+            <div>Topic</div>
+            <div>Change</div>
+            <div>Triage</div>
+            <div>In scope</div>
+          </div>
+          <div class="register-row">
+            <div class="ctrl-id">ISM-1546</div>
+            <div>Multi-factor authentication for privileged users</div>
+            <div><span class="chip modified">Modified</span></div>
+            <div><span class="chip action">Action required</span></div>
+            <div>Yes</div>
+          </div>
+          <div class="register-row">
+            <div class="ctrl-id">ISM-1857</div>
+            <div>Event log retention on cloud workloads</div>
+            <div><span class="chip new">New</span></div>
+            <div><span class="chip monitor">Monitor</span></div>
+            <div>Yes</div>
+          </div>
+          <div class="register-row">
+            <div class="ctrl-id">ISM-0408</div>
+            <div>Legacy patching cadence (superseded by ISM-2471)</div>
+            <div><span class="chip rescinded">Rescinded</span></div>
+            <div><span class="chip none">No action</span></div>
+            <div>N/A</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== SCENE 8: EXPORTS ===================== -->
+  <div class="scene scene-exports" data-scene="7">
+    <div class="browser-chrome" style="margin-bottom: 0;">
+      <span class="browser-dot red"></span>
+      <span class="browser-dot yellow"></span>
+      <span class="browser-dot green"></span>
+      <div class="browser-url">ism-pulse.github.io</div>
+    </div>
+    <div style="padding: 32px 60px;">
+      <div class="export-title">Download outputs</div>
+      <div class="export-buttons">
+        <div class="export-btn e1"><span class="icon">📊</span> Change register (.xlsx)</div>
+        <div class="export-btn e2"><span class="icon">📋</span> Updated SSP-A (.xlsx)</div>
+        <div class="export-btn e3"><span class="icon">📝</span> Word summary (.docx)</div>
+        <div class="export-btn e4"><span class="icon">✉</span> Stakeholder note</div>
+      </div>
+      <div class="downloads-title">Saved locally</div>
+      <div class="downloads">
+        <div class="download-card d1">
+          <div class="big-icon xlsx">XLSX</div>
+          <div>
+            <div class="dc-name">Orion_ChangeRegister_Mar2026.xlsx</div>
+            <div class="dc-sub">Controls · Principles · E8 evidence · Methodology</div>
+          </div>
+        </div>
+        <div class="download-card d2">
+          <div class="big-icon xlsx">XLSX</div>
+          <div>
+            <div class="dc-name">Orion_SSP-A_Mar2026.xlsx</div>
+            <div class="dc-sub">Merged SSP-A · new rows inserted · flags applied</div>
+          </div>
+        </div>
+        <div class="download-card d3">
+          <div class="big-icon docx">DOCX</div>
+          <div>
+            <div class="dc-name">Orion_ISM_Summary_Mar2026.docx</div>
+            <div class="dc-sub">Executive summary · triage totals · rationale</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== SCENE 9: CLOSE ===================== -->
+  <div class="scene scene-close" data-scene="8">
+    <h1 class="close-logo">ISM Pulse</h1>
+    <div class="close-cta">ism-pulse.github.io</div>
+    <div class="close-meta">
+      <b>Apache 2.0</b> · Free &amp; open source &nbsp;·&nbsp; Client-side only · Nothing leaves your browser<br/>
+      <span style="font-size:12px; opacity:0.7;">Built by Gaurav Vikash · Not affiliated with ASD / ACSC</span>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<div class="hint">Press <b>R</b> to replay · Press <b>Space</b> to pause · Screen-record with <b>Loom / QuickTime / OBS</b> to produce an .mp4</div>
+<button class="replay-btn" id="replay">↻ Replay</button>
+
+<script>
+  // ---------------------------------------------------------------------
+  // Scene timing — tune each duration here to retime the reel.
+  // Total ≈ 48 seconds. Each scene's in-scene animations are driven by
+  // CSS delays inside the scene; make sure durations here are at least
+  // (last animation delay + animation duration) for that scene.
+  // ---------------------------------------------------------------------
+  const scenes = [
+    { id: 0, name: 'title',     duration: 3500 },
+    { id: 1, name: 'problem',   duration: 5800 },
+    { id: 2, name: 'promise',   duration: 2500 },
+    { id: 3, name: 'tool',      duration: 5800 },
+    { id: 4, name: 'uploads',   duration: 5200 },
+    { id: 5, name: 'compute',   duration: 3500 },
+    { id: 6, name: 'dashboard', duration: 6500 },
+    { id: 7, name: 'exports',   duration: 5500 },
+    { id: 8, name: 'close',     duration: 5000 }
+  ];
+
+  const TOTAL = scenes.reduce((a, s) => a + s.duration, 0);
+
+  let currentIndex = 0;
+  let currentTimer = null;
+  let progressAnim = null;
+  let progressStart = 0;
+  let progressElapsed = 0;
+  let paused = false;
+
+  const fill = document.getElementById('progress-fill');
+
+  function showScene(i) {
+    document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+    const sceneEl = document.querySelector('[data-scene="' + i + '"]');
+    if (sceneEl) sceneEl.classList.add('active');
+  }
+
+  function scheduleNext(duration) {
+    clearTimeout(currentTimer);
+    currentTimer = setTimeout(() => {
+      currentIndex = (currentIndex + 1) % scenes.length;
+      if (currentIndex === 0) {
+        // loop: reset progress
+        progressElapsed = 0;
+        progressStart = performance.now();
+      }
+      playFromCurrent();
+    }, duration);
+  }
+
+  function playFromCurrent() {
+    showScene(currentIndex);
+    scheduleNext(scenes[currentIndex].duration);
+  }
+
+  function updateProgress() {
+    if (paused) return;
+    const now = performance.now();
+    const elapsed = progressElapsed + (now - progressStart);
+    const pct = Math.min(100, (elapsed / TOTAL) * 100);
+    fill.style.width = pct + '%';
+    if (elapsed >= TOTAL) {
+      progressStart = now;
+      progressElapsed = 0;
+      fill.style.width = '0%';
+    }
+    progressAnim = requestAnimationFrame(updateProgress);
+  }
+
+  function replay() {
+    clearTimeout(currentTimer);
+    cancelAnimationFrame(progressAnim);
+    currentIndex = 0;
+    progressElapsed = 0;
+    progressStart = performance.now();
+    fill.style.width = '0%';
+    paused = false;
+    playFromCurrent();
+    progressAnim = requestAnimationFrame(updateProgress);
+  }
+
+  function togglePause() {
+    if (paused) {
+      paused = false;
+      progressStart = performance.now();
+      playFromCurrent();
+      progressAnim = requestAnimationFrame(updateProgress);
+    } else {
+      paused = true;
+      clearTimeout(currentTimer);
+      cancelAnimationFrame(progressAnim);
+      progressElapsed += performance.now() - progressStart;
+    }
+  }
+
+  // kick off
+  progressStart = performance.now();
+  playFromCurrent();
+  progressAnim = requestAnimationFrame(updateProgress);
+
+  document.getElementById('replay').addEventListener('click', replay);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'r' || e.key === 'R') { replay(); }
+    else if (e.key === ' ') { e.preventDefault(); togglePause(); }
+  });
+</script>
+
+</body>
+</html>
