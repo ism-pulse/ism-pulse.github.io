@@ -174,19 +174,20 @@ Setup for the Project is documented in
 ### Option A — run it from your desktop
 
 1. Download `ISM Quarterly Review Tool.html` from this repo.
-2. Double-click it. It opens in your default browser.
-3. Fill in Product name, Information Classification and a short Product
+2. Scan all the files with your organisation's standard tools.
+3. Double-click it. It opens in your default browser.
+4. Fill in Product name, Information Classification and a short Product
    overview. (All three are validated so the register is always
    attributable.)
-4. Upload your **previous-quarter SSP-A** (`.xlsx`).
-5. Upload the **current-quarter CCM** (`.xlsx`) from
+5. Upload your **previous-quarter SSP-A** (`.xlsx`).
+6. Upload the **current-quarter CCM** (`.xlsx`) from
    <https://www.cyber.gov.au>.
-6. Upload the **ISM Changes PDF** for the same quarter from
+7. Upload the **ISM Changes PDF** for the same quarter from
    <https://www.cyber.gov.au>. This enables cross-validation of the delta
    and extracts the ASD-authored rescission rationale.
-7. Click **Compute delta**. Review the result in the interactive dashboard.
+8. Click **Compute delta**. Review the result in the interactive dashboard.
    Edit In scope, Triage, Recommended action and Owner / Notes inline.
-8. Use the **Download outputs** buttons to export the Change Register
+9. Use the **Download outputs** buttons to export the Change Register
    (`.xlsx`), the Updated SSP-A (`.xlsx`) and / or the Word summary (`.docx`)
    before you close the tab — the tool does not persist session state.
 
