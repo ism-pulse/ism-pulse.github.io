@@ -208,6 +208,7 @@ they're invented for demonstration.
 ```
 .
 ├── index.html                       # The tool itself (open in a browser)
+├── ism-pulse-demo-animation.html    # A quick animated demo of the tool
 ├── README.md                        # This file
 ├── VALIDATION.md                    # Validation pack — fixtures, regression harness, known gaps
 ├── LICENSE                          # Apache 2.0 — full licence text
