@@ -7,7 +7,6 @@ Run this before every release, whether it's a quarterly CCM update or a code cha
 ## 1. Automated tests (Terminal)
 
 ```bash
-cd ".../IRAP Pulse"
 npm test                  # 113 unit tests — must all pass
 npm run test:integration  # 17 integration tests — must all pass
 ```
@@ -24,7 +23,7 @@ node build.mjs
 
 ## 3. Browser smoke test (Chrome)
 
-Open `dist/index.html` directly in Chrome (no server needed).
+Open `dist/index.html` directly in Chrome (no server needed — smoke-test against the build output before promoting to root).
 
 **Security smoke test**
 - Open DevTools Console: the page must load with **no Content-Security-Policy violation errors** (the inline bundle is allowed by its build-time hash). If the hash is stale, rebuild
@@ -75,7 +74,9 @@ When updating for a new ISM quarter:
 ## 5. Deploy
 
 ```bash
-cp dist/index.html /opt/bitnami/wordpress/irap-pulse/index.html
+git add index.html
+git commit -m "release: <quarter> CCM update"   # or describe the change
+git push origin main
 ```
 
-Verify the live URL loads and the zero-delta check passes against the bundled files.
+Verify the live GitHub Pages URL loads and the zero-delta check passes against the bundled files.

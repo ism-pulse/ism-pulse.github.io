@@ -48,7 +48,7 @@ Side-by-side comparison of two CCM or SSP-A workbooks using Chart.js visualisati
 
 ## How to use
 
-Open `dist/index.html` in a browser. No server, no installation.
+Open `index.html` in a browser. No server, no installation.
 
 ### Tab 1 — Create SSP-A
 
@@ -109,15 +109,19 @@ See the Release Checklist for the quarterly update procedure.
 
 ## Building from source
 
+End users do not need to build anything — clone the repo and open `index.html`.
+
+Contributors and maintainers:
+
 ```bash
 npm install
 npm test                   # 113 unit tests
 npm run test:integration   # 17 integration tests
 npm run typecheck          # tsc type check
-node build.mjs             # compiles src/ → dist/index.html
+node build.mjs             # compiles src/ → dist/index.html + index.html
 ```
 
-The build pipeline uses TypeScript and esbuild. The output is a single self-contained `dist/index.html` file.
+The build pipeline uses TypeScript and esbuild. `dist/index.html` is the intermediate build output; `index.html` at the repo root is the committed distributable.
 
 ---
 

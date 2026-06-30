@@ -15,7 +15,7 @@
  */
 
 import * as esbuild from 'esbuild';
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, copyFileSync } from 'fs';
 import { createHash } from 'crypto';
 
 const start = Date.now();
@@ -59,12 +59,10 @@ if (html.includes('__BUNDLE_CSP_HASH__')) {
   throw new Error('CSP bundle-hash placeholder was not replaced');
 }
 
-// Write to dist/index.html (safe to overwrite — not tracked by OneDrive).
-// To update the root index.html distributable, copy dist/index.html over it
-// using the Write tool or: cp dist/index.html index.html from your terminal.
 writeFileSync('dist/index.html', html, 'utf8');
+copyFileSync('dist/index.html', 'index.html');
 console.log(`CSP inline-bundle hash: ${bundleHash}`);
 
 const elapsed = ((Date.now() - start) / 1000).toFixed(2);
 const sizeKB  = Math.round(Buffer.byteLength(html, 'utf8') / 1024);
-console.log(`\nBuild complete in ${elapsed}s → dist/index.html (${sizeKB} KB)`);
+console.log(`\nBuild complete in ${elapsed}s → dist/index.html + index.html (${sizeKB} KB)`);
