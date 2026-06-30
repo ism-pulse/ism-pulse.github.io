@@ -12,8 +12,9 @@
     "test:integration": "vitest run --config vitest.integration.ts",
     "check":            "tsc --noEmit && vitest run"
   },
+  "packageManager": "pnpm@11.9.0",
   "devDependencies": {
-    "esbuild":    "^0.25.0",
+    "esbuild":    "^0.28.1",
     "typescript": "^5.8.0",
     "vitest":     "^3.0.0"
   }

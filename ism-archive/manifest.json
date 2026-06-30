@@ -1,0 +1,22 @@
+{
+  "versions": [
+    { "id": "2026-06", "label": "June 2026",      "file": "ccm-2026-06.xlsx", "date": "2026-06-01", "sha256": "edd805addd246687b5368cda5414481f3d3de6f1bbeb4771dc1cd169049b77e5" },
+    { "id": "2026-03", "label": "March 2026",     "file": "ccm-2026-03.xlsx", "date": "2026-03-01", "sha256": "1c75f4a81476d291c6d529e2896b0fc00353ca5aa09e79229f7151724428ffc5" },
+    { "id": "2025-12", "label": "December 2025",  "file": "ccm-2025-12.xlsx", "date": "2025-12-01", "sha256": "05d95c8e3b89519bbfdfae0c35df963539f58073a17f271fe2e85d1b5b3198a8" },
+    { "id": "2025-09", "label": "September 2025", "file": "ccm-2025-09.xlsx", "date": "2025-09-01", "sha256": "84e3eacc3e8e7cae24570ab9f32b3123dbe5593637f17f003bf2002261fdef57" },
+    { "id": "2025-06", "label": "June 2025",      "file": "ccm-2025-06.xlsx", "date": "2025-06-01", "sha256": "bf9ed241a0c73d9b938829649cb0ccded396b1d3dc6d8f5b8d92f72451642d05" },
+    { "id": "2025-03", "label": "March 2025",     "file": "ccm-2025-03.xlsx", "date": "2025-03-01", "sha256": "04fd210dafa9fbd831209f01c222e1ef5c946a6430cb032b368244363106803a" },
+    { "id": "2024-12", "label": "December 2024",  "file": "ccm-2024-12.xlsx", "date": "2024-12-01", "sha256": "2ae62ed28783061534178f75bafa334e43da59297f183c43974ef3f39b8f514a" },
+    { "id": "2024-09", "label": "September 2024", "file": "ccm-2024-09.xlsx", "date": "2024-09-01", "sha256": "cea98f53836a4935ddbb62d8f965e3ddd0287d51ac8d3778b3419c1db747003b" },
+    { "id": "2024-06", "label": "June 2024",      "file": "ccm-2024-06.xlsx", "date": "2024-06-01", "sha256": "5c729589d10458c2096d4c20008bcd54054102560cf7fa5fafa7a406f765c58d" },
+    { "id": "2024-03", "label": "March 2024",     "file": "ccm-2024-03.xlsx", "date": "2024-03-01", "sha256": "9d71fb2057d4050ce95d4d3df9365ba7c13abac4451cf1a048720262e58208b3" },
+    { "id": "2023-12", "label": "December 2023",  "file": "ccm-2023-12.xlsx", "date": "2023-12-01", "sha256": "cd51392e7a059a8db10b5ccb25f0e62ed7ae03561c5b4f7149353e8c07576129" },
+    { "id": "2023-09", "label": "September 2023", "file": "ccm-2023-09.xlsx", "date": "2023-09-01", "sha256": "6b781498dc72ed2f13841f7e8b0fbc7de2c37282766fd13c87210224ed9be9a8" },
+    { "id": "2023-06", "label": "June 2023",      "file": "ccm-2023-06.xlsx", "date": "2023-06-01", "sha256": "e25648c898ab7eb90a5b8ed67df2b5cb19bf0eddf84b9be2d83a0f9a61def7a9" },
+    { "id": "2023-03", "label": "March 2023",     "file": "ccm-2023-03.xlsx", "date": "2023-03-01", "sha256": "11a1b5ec9704cc1a5fe104c40ac722d4e0440d9edf951e959fbbbc0de7517262" },
+    { "id": "2022-12", "label": "December 2022",  "file": "ccm-2022-12.xlsx", "date": "2022-12-01", "sha256": "37867df779508513fc84608fb95bd9eef5e92b97568831216a7573b8ebbbe713" },
+    { "id": "2022-09", "label": "September 2022", "file": "ccm-2022-09.xlsx", "date": "2022-09-01", "sha256": "808b9d03df5985d632c8905ad02deb004df1a369016054ec61e30e88894a7953" },
+    { "id": "2022-06", "label": "June 2022",      "file": "ccm-2022-06.xlsx", "date": "2022-06-01", "sha256": "c7bc15c9bbb357b9de794eecb70734f224a6fa08321ad1775198f88b3f9765cd" },
+    { "id": "2022-03", "label": "March 2022",     "file": "ccm-2022-03.xlsx", "date": "2022-03-01", "sha256": "6fffa02f6d107cb06647ef6515a4668eb7eda59311afc7c74b434aea3beee759" }
+  ]
+}

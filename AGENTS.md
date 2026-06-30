@@ -35,10 +35,10 @@ IRAP Pulse/
 ### Build commands
 
 ```bash
-npm test                   # 105 unit tests — run after any logic change
-npm run test:integration   # 17 integration tests — run before a release
-npm run typecheck          # tsc type check without emitting
-node build.mjs             # compile → dist/index.html (~355 KB)
+pnpm test                  # 113 unit tests — run after any logic change
+pnpm test:integration      # 17 integration tests — run before a release
+pnpm typecheck             # tsc type check without emitting
+node build.mjs             # compile → dist/index.html + index.html (~355 KB)
 ```
 
 ### Build pipeline notes

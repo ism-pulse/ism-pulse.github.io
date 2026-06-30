@@ -7,8 +7,8 @@ Run this before every release, whether it's a quarterly CCM update or a code cha
 ## 1. Automated tests (Terminal)
 
 ```bash
-npm test                  # 113 unit tests — must all pass
-npm run test:integration  # 17 integration tests — must all pass
+pnpm test                  # 113 unit tests — must all pass
+pnpm test:integration      # 17 integration tests — must all pass
 ```
 
 ---

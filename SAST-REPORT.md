@@ -4,7 +4,7 @@ Scope: the full client-side tool (`src/*.ts`, `template.html`, vendored `src/ven
 
 Date: 30 June 2026. Reviewer: automated SAST pass.
 
-> Remediation status (30 June 2026): all findings below, plus three additional findings raised in a separate Codex review, have been fixed. The upload cap is now 5 MB and is shown next to every upload control. See "Remediation applied" at the end. Verified with `npm run typecheck`, 113 unit tests, 17 integration tests, `node build.mjs`, and dynamic checks confirming the decompression bomb is rejected and the previously quadratic parser is now linear.
+> Remediation status (30 June 2026): all findings below, plus three additional findings raised in a separate Codex review, have been fixed. The upload cap is now 5 MB and is shown next to every upload control. See "Remediation applied" at the end. Verified with `pnpm typecheck`, 113 unit tests, 17 integration tests, `node build.mjs`, and dynamic checks confirming the decompression bomb is rejected and the previously quadratic parser is now linear.
 
 ## Threat model
 
@@ -88,7 +88,7 @@ Several lookup objects are plain `{}` keyed by values taken from the uploaded fi
 - Untrusted file content rendered into the DOM is consistently passed through `escapeHtml` (71 call sites), and filter dropdowns are populated with `createElement` + `textContent` rather than HTML, so the XSS surface is well contained
 - The inline word-diff caps its input at 1500 characters before running the O(n*m) LCS, avoiding a CPU blow-up on long descriptions (`src/main.ts`, `wordDiffHtml`)
 - Dynamic `RegExp` objects built from file or user data escape regex metacharacters first (`src/pdf.ts`, `src/xlsxsurgery.ts`)
-- No runtime dependencies are shipped, `fflate` is vendored and pinned (MIT, 0.8.2), and `npm audit` reports 0 vulnerabilities
+- No runtime dependencies are shipped, `fflate` is vendored and pinned (MIT, 0.8.2), and `pnpm audit` reports 0 vulnerabilities
 - Fully client-side, no network egress of user data, and a 50 MB upload size gate is enforced
 
 ## Recommended remediation order

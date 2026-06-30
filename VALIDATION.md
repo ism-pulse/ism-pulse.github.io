@@ -47,7 +47,7 @@ IRAP Pulse operates on four workflows. Validation covers all four.
 ### 2.1 Unit tests (113 tests)
 
 ```bash
-npm test
+pnpm test
 ```
 
 Covers the pure-logic modules in `src/`: delta computation (`delta.ts`), normalisation (`normalise.ts`), applicability parsing (`applicability.ts`), CCM lossless editing (`ccm.ts`), PDF extraction (`pdf.ts`), and the lossless surgery functions (`xlsxsurgery.ts`). Tests use `normaliseAOA` directly (no CDN dependency) and run in a Node environment via vitest.
@@ -57,7 +57,7 @@ All 113 tests must pass before any release.
 ### 2.2 Integration tests (17 tests)
 
 ```bash
-npm run test:integration
+pnpm test:integration
 ```
 
 End-to-end tests against real ASD file fixtures. These are run manually before a release. They cover multi-quarter delta regression, lossless export round-trips, and column-detection across CCM versions.
@@ -122,8 +122,8 @@ Three features are explicitly heuristic and should be treated as reviewer prompt
 
 ```bash
 # Run the full automated test suite
-npm test
-npm run test:integration
+pnpm test
+pnpm test:integration
 
 # Confirm the startup self-test pill is green
 open dist/index.html

@@ -11,7 +11,7 @@
  * globals in src/globals.d.ts so TypeScript is happy, and esbuild leaves them
  * as plain identifiers in the IIFE output (no imports needed at runtime).
  *
- * Usage:  npm run build
+ * Usage:  pnpm build
  */
 
 import * as esbuild from 'esbuild';

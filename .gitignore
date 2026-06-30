@@ -1,7 +1,11 @@
 # Dependencies
 node_modules/
 
-# Build output
+# Lockfiles — only pnpm-lock.yaml is committed
+package-lock.json
+yarn.lock
+
+# Build output (intermediate — root index.html is the committed distributable)
 dist/
 
 # Archive (v1 source — delete manually after deploying v2)

@@ -114,10 +114,10 @@ End users do not need to build anything — clone the repo and open `index.html`
 Contributors and maintainers:
 
 ```bash
-npm install
-npm test                   # 113 unit tests
-npm run test:integration   # 17 integration tests
-npm run typecheck          # tsc type check
+pnpm install
+pnpm test                  # 113 unit tests
+pnpm test:integration      # 17 integration tests
+pnpm typecheck             # tsc type check
 node build.mjs             # compiles src/ → dist/index.html + index.html
 ```
 
