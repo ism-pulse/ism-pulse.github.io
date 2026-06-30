@@ -1,0 +1,1726 @@
+<!DOCTYPE html>
+<!--
+  IRAP Pulse - Be IRAP Ready. Always.
+  © 2026 Cybernion <https://cybernion.com.au/>
+  All rights reserved. This tool is provided free of charge for use by security
+  practitioners. No part of this tool may be reproduced, redistributed, or used
+  to create derivative works without prior written permission from Cybernion.
+  Source: https://github.com/irap-pulse/irap-pulse.github.io
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<!-- Content-Security-Policy. The inline application bundle is allowed by SHA-256
+     hash (computed and injected at build time); injected/inline scripts are
+     blocked, so a missed output-escape cannot run as script. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' __BUNDLE_CSP_HASH__ https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; worker-src blob:; child-src blob:; object-src 'none'; base-uri 'none'; form-action 'none'" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="author" content="Cybernion" />
+<meta name="copyright" content="© 2026 Cybernion. All rights reserved." />
+<meta name="rights" content="All rights reserved." />
+<meta name="description" content="IRAP Pulse is a free browser-based tool for IRAP assessors and security teams to review ISM quarterly changes, generate pre-populated SSP-A templates, and produce a structured change register — all client-side, no data leaves your machine." />
+<meta name="robots" content="index, follow" />
+<!-- Open Graph — controls link previews on LinkedIn, Slack, and other platforms -->
+<meta property="og:type"        content="website" />
+<meta property="og:site_name"   content="IRAP Pulse by Cybernion" />
+<meta property="og:title"       content="IRAP Pulse — ISM Toolkit for IRAP Readiness and Assessment" />
+<meta property="og:description" content="Free browser-based tool for IRAP assessors. Review ISM quarterly changes, generate pre-populated SSP-A templates, and produce a structured change register — all client-side." />
+<meta property="og:url"         content="https://irap-pulse.github.io/" />
+<link rel="canonical" href="https://irap-pulse.github.io/" />
+<!-- Preconnect to CDN origins so the browser opens TCP connections early,
+     reducing script load latency even though the scripts are loaded at end of body -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+<title>IRAP Pulse — ISM Toolkit for IRAP Readiness and Assessment</title>
+<link rel="icon" type="image/png" id="favicon-link" />
+<!-- All four JS libraries (xlsx-js-style, pdf.js, Chart.js, chartjs-plugin-datalabels)
+     are loaded at end of body to avoid render-blocking.
+     Preconnect hints in <head> ensure the CDN TCP connections are opened early. -->
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --surface: #ffffff;
+    --border: #dfe3eb;
+    --border-strong: #c5cdd9;
+    --text: #1a202c;
+    --text-muted: #5a6a7f;
+    --primary: #2e75b6;
+    --primary-dark: #1f3864;
+    --accent-new: #c9daf8;
+    --accent-modified: #fce5cd;
+    --accent-rescinded: #ead1dc;
+    --radius: 6px;
+    --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 6px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  body { min-height: 100vh; display: flex; flex-direction: column; }
+  main { flex: 1; width: 100%; }
+
+  /* ----- Accessibility — skip link + focus visibility -------------------- */
+  /* A keyboard-only skip link: visually hidden until focused, then anchored
+     to the top-left so Tab / screen-readers can jump past the header. */
+  .skip-link {
+    position: absolute; left: -9999px; top: 0;
+    background: #1f3864; color: #fff; padding: 8px 14px;
+    font-weight: 600; text-decoration: none; border-radius: 0 0 6px 0;
+    z-index: 100;
+  }
+  .skip-link:focus, .skip-link:focus-visible {
+    left: 0; top: 0; outline: 2px solid #e69138; outline-offset: 0;
+  }
+  /* Visible focus ring on every interactive element. Using :focus-visible so
+     mouse clicks don't leave rings on buttons, but keyboard nav always does.
+     Default browser focus rings on dark headers are invisible — this enforces
+     one that contrasts on every background we use. */
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible,
+  textarea:focus-visible, [tabindex]:focus-visible, summary:focus-visible {
+    outline: 2px solid #e69138;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  header {
+    background: linear-gradient(135deg, #1f3864 0%, #2e75b6 100%);
+    color: #fff;
+    padding: 12px 32px;
+    box-shadow: var(--shadow);
+  }
+  header h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.2px; }
+  header .hdr-row {
+    display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center;
+    justify-content: space-between;
+  }
+  header .hdr-brand { display: flex; align-items: center; gap: 12px; }
+  header .hdr-logo { height: 58px; width: auto; display: block; }
+  header .byline { font-size: 12px; opacity: 0.85; }
+  header .byline a { color: #fff; text-decoration: underline; text-underline-offset: 2px; }
+  header p { margin: 6px 0 0; opacity: 0.9; font-size: 13px; max-width: 720px; }
+  /* Self-test pill — sits in the header so users see the tool's health immediately.
+     The pill and its info icon are wrapped in .self-test-group so the flex parent
+     (.hdr-row, justify-content: space-between) treats them as a single unit — this
+     stops them splitting to opposite edges of the row when the h1 wraps. */
+  .self-test-group {
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .self-test-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11.5px; font-weight: 600; letter-spacing: 0.2px;
+    padding: 3px 10px; border-radius: 999px;
+    background: rgba(255,255,255,0.12); color: #fff;
+    border: 1px solid rgba(255,255,255,0.25);
+  }
+  .self-test-pill.pass { background: #1e8449; border-color: #1e8449; }
+  .self-test-pill.fail { background: #b02a2a; border-color: #b02a2a; }
+  .self-test-pill.pending { background: rgba(255,255,255,0.12); }
+  .self-test-pill .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: currentColor; display: inline-block;
+  }
+  /* Info icon next to the self-test pill — hovers / keyboard-focuses to
+     reveal a succinct explainer. The pill itself carries a short aria label;
+     the detailed "what is this?" copy lives behind the icon so it doesn't
+     occupy space in the header. */
+  .self-test-info {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: rgba(255,255,255,0.18); color: #fff;
+    font-size: 11px; font-weight: 700; font-style: normal;
+    cursor: help; position: relative; user-select: none;
+    border: 1px solid rgba(255,255,255,0.32);
+    line-height: 1;
+  }
+  .self-test-info:hover, .self-test-info:focus { background: rgba(255,255,255,0.34); outline: none; }
+  .self-test-info:focus-visible { box-shadow: 0 0 0 2px rgba(255,255,255,0.55); }
+  /* Tooltip is right-anchored to the icon because the icon sits near the right
+     edge of the header — a left/centred tooltip overflows the viewport on
+     narrow screens. The arrow follows the icon, sitting near the tip's right
+     edge. Width is capped at viewport minus a margin so long copy still wraps
+     cleanly on mobile. */
+  .self-test-info-tip {
+    display: none;
+    position: absolute; top: calc(100% + 8px);
+    right: -4px; left: auto; transform: none;
+    width: 300px; max-width: calc(100vw - 32px);
+    background: #1a202c; color: #fff;
+    padding: 10px 12px; border-radius: 6px;
+    font-size: 12px; font-weight: 400; line-height: 1.5; letter-spacing: 0.1px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    z-index: 80;
+    white-space: normal; text-align: left;
+    text-transform: none;
+  }
+  .self-test-info-tip b { color: #ffd76a; }
+  .self-test-info-tip::before {
+    content: ""; position: absolute; top: -5px;
+    right: 10px; left: auto; transform: rotate(45deg);
+    width: 10px; height: 10px; background: #1a202c;
+  }
+  .self-test-info:hover .self-test-info-tip,
+  .self-test-info:focus .self-test-info-tip,
+  .self-test-info:focus-within .self-test-info-tip { display: block; }
+  main { padding: 24px 32px 64px; max-width: 1680px; margin: 0 auto; }
+  section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 16px; box-shadow: var(--shadow); }
+  section h2 { margin: 0 0 14px 0; font-size: 15px; font-weight: 600; color: var(--primary-dark); letter-spacing: 0.3px; text-transform: uppercase; }
+  .step-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 24px; }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .req-mark { color: #c43a3a; font-weight: 700; margin-left: 2px; }
+  .req-legend { font-size: 12px; color: var(--text-muted); margin: 10px 0 0; }
+  input:required:invalid, select:required:invalid, textarea:required:invalid { border-color: #f0b4b4; }
+  input:required:focus:invalid, select:required:focus:invalid, textarea:required:focus:invalid { border-color: #c43a3a; box-shadow: 0 0 0 3px rgba(196,58,58,0.15); }
+  input[type="text"], select, textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 13px;
+    background: #fff;
+    color: var(--text);
+  }
+  input[type="text"]:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(46, 117, 182, 0.15);
+  }
+  textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+  .drop-zone { border-radius: var(--radius); transition: background 0.15s; }
+  .drop-zone.drag-over { background: #e8f2fc; outline: 2px dashed var(--primary); outline-offset: 2px; }
+  .file-status { font-size: 12px; color: var(--text-muted); white-space: nowrap; min-width: 120px; text-align: right; }
+  .file-status.ok { color: #128a5a; font-weight: 500; }
+  .file-status.err { color: #c0392b; font-weight: 500; }
+  button.primary {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 16px;
+  }
+  button.primary:hover { background: var(--primary-dark); }
+  button.primary:disabled { background: var(--border-strong); cursor: not-allowed; }
+  /* Soft "missing inputs" hint — the button is still clickable (we never
+     hard-block), it just visually telegraphs that clicking right now will
+     surface a warning list. */
+  button.primary.not-ready { background: #95b3cc; box-shadow: inset 0 0 0 1px #7a9bba; }
+  button.primary.not-ready:hover { background: #7a9bba; }
+  button.secondary { background: #fff; color: var(--primary); border: 1px solid var(--primary); padding: 6px 12px; border-radius: var(--radius); font-size: 12px; cursor: pointer; }
+  button.secondary:hover { background: #f0f6fc; }
+
+  /* Dashboard */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
+  .card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+  .card .value { font-size: 24px; font-weight: 600; color: var(--primary-dark); line-height: 1; }
+  .card .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-top: 4px; font-weight: 500; }
+  .card.accent-new { border-left: 4px solid #6fa8dc; }
+  .card.accent-modified { border-left: 4px solid #f6b26b; }
+  .card.accent-rescinded { border-left: 4px solid #c27ba0; }
+  /* Grouped stats — separate Controls / Principles blocks so reviewers can
+     see at a glance how each kind broke down, without having to count cards. */
+  .stats-group { margin-bottom: 18px; }
+  .stats-group h3 {
+    margin: 0 0 8px 0; font-size: 12px; font-weight: 700; color: var(--primary-dark);
+    text-transform: uppercase; letter-spacing: 0.6px;
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  /* Total count: bigger and bolder than the section label so the size of the
+     workload this quarter is the first thing the reviewer notices for each kind. */
+  .stats-group h3 .total {
+    font-size: 16px; font-weight: 700; color: #1f3864;
+    text-transform: none; letter-spacing: 0;
+  }
+  .stats-group h3 .total .n {
+    font-size: 22px; font-weight: 700; color: #1f3864;
+    margin-right: 4px;
+  }
+  .stats-group h3 .total .u {
+    font-size: 12px; font-weight: 500; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .stats-group.empty { opacity: 0.6; }
+  .stats-group.empty .cards { display: none; }
+  .stats-group.empty h3 .total { font-style: italic; }
+
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 12px; }
+  .filter-bar > div { flex: 0 0 auto; }
+  .filter-bar label { margin-bottom: 2px; }
+  .filter-bar select, .filter-bar input { min-width: 140px; padding: 6px 8px; font-size: 13px; }
+  .filter-bar .search { min-width: 240px; }
+  .filter-bar .reset { margin-left: auto; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; }
+  table.register { border-collapse: collapse; width: 100%; font-size: 12.5px; table-layout: fixed; }
+  table.register thead { background: var(--primary); color: #fff; position: sticky; top: 0; z-index: 2; }
+  /* Header cells wrap on whitespace and break long single words so a long
+     column title (e.g. "ISM ID") never overflows into the
+     adjacent header cell. vertical-align:bottom keeps multi-line titles
+     visually balanced against single-line ones. */
+  table.register thead th { padding: 10px 8px; text-align: left; font-weight: 600; font-size: 11.5px; letter-spacing: 0.3px; border-right: 1px solid rgba(255,255,255,0.2); vertical-align: bottom; color: #fff !important; overflow-wrap: break-word; word-wrap: break-word; }
+  table.register thead th:last-child { border-right: none; }
+  table.register td { padding: 8px; vertical-align: top; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
+  table.register td:last-child { border-right: none; }
+  table.register tr:hover td { background: #f5f9fd; }
+  .chip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-weight: 600; font-size: 11px; white-space: nowrap; text-align: center; }
+  .chip.new       { background: var(--accent-new); color: #1f3864; }
+  .chip.updated   { background: var(--accent-modified); color: #7a4e0f; }
+  .chip.rescinded { background: var(--accent-rescinded); color: #6b2e52; }
+  .chip.triage-unset   { background: #eee; color: #666; }
+  .chip.chip-yes { background: #d9ead3; color: #2d5c1d; }
+  .chip.chip-no  { background: #eeeeee; color: #555; }
+
+  /* Guideline group headers (F4) */
+  table.register tr.guideline-header { background: #eef3f9; cursor: pointer; user-select: none; }
+  table.register tr.guideline-header:hover td { background: #e3ecf6; }
+  table.register tr.guideline-header td { padding: 10px 12px; border-bottom: 1px solid #c9d4e4; border-top: 1px solid #c9d4e4; font-weight: 600; color: var(--primary-dark); font-size: 13px; }
+  .guideline-header .guideline-toggle { display: inline-block; width: 14px; color: var(--primary-dark); font-weight: 700; margin-right: 8px; transition: transform 0.15s ease; }
+  .guideline-header .guideline-name { font-weight: 600; }
+  .guideline-header .guideline-count { margin-left: 10px; font-weight: 500; color: var(--text-muted); font-size: 12px; }
+  .guideline-header .guideline-chips { margin-left: 12px; display: inline-flex; gap: 6px; vertical-align: middle; }
+  .guideline-header .guideline-chips .chip { font-size: 10.5px; padding: 1px 7px; }
+  table.register tr.kind-header td { padding: 10px 12px; background: var(--primary-dark); color: #fff; font-weight: 700; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; border-top: 2px solid var(--primary); border-bottom: 1px solid var(--primary); }
+  table.register tr.col-subheader th { padding: 5px 8px; background: #eef3f9; color: var(--text-muted); font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid var(--border); vertical-align: bottom; }
+  table.register tr.kind-header .kind-label { display: inline-block; }
+  table.register tr.kind-header .kind-count { margin-left: 12px; font-weight: 500; font-size: 11.5px; text-transform: none; letter-spacing: 0; color: #cfd8e8; }
+  .group-controls { display: inline-flex; gap: 6px; margin-left: auto; }
+  .group-controls button {
+    background: #fff; border: 1px solid var(--border-strong); color: var(--primary-dark);
+    padding: 5px 10px; font-size: 12px; border-radius: 4px; cursor: pointer;
+  }
+  .group-controls button:hover { background: #f0f6fc; }
+
+  .col-id       { min-width: 80px; width: 80px; font-weight: 600; color: var(--primary-dark); white-space: nowrap; }
+  .col-change   { min-width: 80px; width: 80px; white-space: nowrap; }
+  .col-guideline{ min-width: 120px; width: 12%; font-size: 12px; color: var(--text-muted); }
+  .col-topic    { min-width: 120px; width: 13%; }
+  .col-appl     { min-width: 80px; width: 80px; font-size: 11px; font-family: monospace; }
+  .col-text     { min-width: 320px; width: 40%; font-size: 12px; word-wrap: break-word; overflow-wrap: break-word; }
+  .col-text .label-inline { font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-top: 4px; }
+  .col-text .label-inline:first-child { margin-top: 0; }
+  .col-scoping  { min-width: 110px; width: 11%; font-size: 11.5px; }
+  .col-scoping .scoping-prov { font-weight: 500; }
+  .col-scoping .scoping-stat { color: var(--text-muted); }
+  .col-inscope  { min-width: 70px; width: 70px; }
+  .validation-note { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+  .validation-note.ok { color: #128a5a; }
+  .validation-note.warn { color: #c0392b; }
+  .drift-list, .pair-list { margin: 6px 0 0 18px; padding: 0; color: var(--text-muted); }
+  .drift-list li, .pair-list li { margin: 2px 0; font-size: 12px; }
+  .drift-list code, .pair-list code { background: #f4f6fa; padding: 1px 4px; border-radius: 3px; font-size: 11px; }
+  .drift-list em { font-style: normal; color: #1f3864; }
+  .pair-list .hint { color: var(--text-muted); }
+  .diff-old { color: #86180b; background: #fbe9e7; padding: 4px 6px; border-radius: 4px; display: block; margin-bottom: 4px; }
+  .diff-new { color: #2d5c1d; background: #eaf4df; padding: 4px 6px; border-radius: 4px; display: block; }
+  /* Word-level diff (F2) */
+  .diff-rescinded { color: #6b2e52; background: #f7e6ef; padding: 4px 6px; border-radius: 4px; display: block; border-left: 3px solid #c27ba0; white-space: pre-wrap; margin-top: 2px; }
+  .diff-inline { padding: 4px 6px; border-radius: 4px; display: block; background: #fbfcfe; border: 1px solid var(--border); line-height: 1.5; color: var(--text); }
+  .diff-inline ins { background: #d7ecc3; color: #1f4e0f; text-decoration: none; border-radius: 2px; padding: 0 2px; }
+  .diff-inline del { background: #f5c9c3; color: #701a10; text-decoration: line-through; border-radius: 2px; padding: 0 2px; }
+  .empty-state { padding: 32px; text-align: center; color: var(--text-muted); font-size: 14px; }
+  .hidden { display: none; }
+  .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #eee; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .meta-bar { background: #eef3f9; border: 1px solid #d4deec; border-radius: var(--radius); padding: 10px 14px; margin-bottom: 14px; font-size: 12.5px; color: var(--text); display: flex; flex-wrap: wrap; gap: 18px; }
+  .meta-bar span b { color: var(--primary-dark); font-weight: 600; }
+  .download-panel {
+    background: linear-gradient(135deg, #2e75b6 0%, #1f3864 100%);
+    color: #fff;
+    border-radius: var(--radius);
+    padding: 18px 22px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 10px rgba(31, 56, 100, 0.18);
+    display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
+  }
+  .download-panel .dl-title { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; margin-right: 6px; }
+  .download-panel button.big-dl {
+    background: #fff; color: #1f3864; border: none; padding: 12px 20px; border-radius: var(--radius);
+    font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12); margin-top: 0;
+  }
+  .download-panel button.big-dl:hover { background: #f0f6fc; }
+  .download-panel button.big-dl .icon { font-size: 16px; }
+  .dl-auto-notice { font-size: 11.5px; opacity: 0.8; flex: 1 1 100%; margin-top: 4px; }
+
+  /* ----- Modal (print summary + stakeholder draft) ----------------------- */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(20, 28, 44, 0.55);
+    display: flex; align-items: flex-start; justify-content: center;
+    z-index: 60; padding: 4vh 2vw; overflow: auto;
+  }
+  .modal-overlay.hidden { display: none; }
+  .modal {
+    background: #fff; border-radius: var(--radius);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.32);
+    width: min(820px, 100%); display: flex; flex-direction: column;
+    max-height: 92vh;
+  }
+  .modal-toolbar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    background: #f7f9fc;
+    border-top-left-radius: var(--radius);
+    border-top-right-radius: var(--radius);
+  }
+  .modal-toolbar-spacer { flex: 1; }
+  .modal-btn {
+    background: #fff; border: 1px solid var(--border);
+    padding: 6px 12px; border-radius: 6px; cursor: pointer;
+    font-size: 13px; color: var(--text);
+  }
+  .modal-btn:hover { background: #eef3f9; }
+  .modal-body { padding: 22px 26px; overflow: auto; }
+  .modal-body h1 { font-size: 20px; margin: 0 0 4px; color: #1f3864; }
+  .modal-body h2 { font-size: 15px; margin: 18px 0 6px; color: #1f3864; }
+  #stakeholder-text {
+    width: 100%; min-height: 360px; font-family: Consolas, Menlo, monospace;
+    font-size: 13px; line-height: 1.5; border: 1px solid var(--border);
+    border-radius: 6px; padding: 12px;
+  }
+  /* Collapsible about-section wrapper */
+  details.about-section {
+    background: #fbfcfe;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-top: 24px;
+    overflow: hidden;
+  }
+  details.about-section > summary {
+    padding: 13px 22px;
+    font-size: 13px; font-weight: 600; color: var(--primary-dark);
+    letter-spacing: 0.4px; text-transform: uppercase;
+    cursor: pointer; user-select: none; list-style: none;
+    display: flex; align-items: center; gap: 8px;
+  }
+  details.about-section > summary::-webkit-details-marker { display: none; }
+  details.about-section > summary::before {
+    content: "▶"; font-size: 10px; color: var(--primary);
+    transition: transform 0.15s ease; display: inline-block;
+  }
+  details.about-section[open] > summary::before { transform: rotate(90deg); }
+  details.about-section > summary:hover { background: #f0f6fc; }
+  .methodology {
+    padding: 0 26px 22px;
+  }
+  .methodology h2 { display: none; }
+  .methodology h3 { font-size: 13px; color: var(--primary-dark); margin: 18px 0 8px 0; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase; }
+  .methodology p, .methodology li { font-size: 13px; line-height: 1.55; color: var(--text); }
+  .methodology ol, .methodology ul { padding-left: 22px; margin: 6px 0 10px; }
+  .methodology li { margin-bottom: 4px; }
+  .methodology .callout { background: #eef3f9; border-left: 4px solid var(--primary); padding: 10px 14px; margin: 12px 0; font-size: 13px; border-radius: 4px; }
+  /* --- "How this tool works" visual layout --- */
+  .method-lead { font-size: 13.5px; margin: 0 0 6px 0; color: var(--text); }
+  .pipeline {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    align-items: stretch;
+    gap: 8px;
+    margin: 16px 0 4px 0;
+  }
+  .pipeline .stage {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
+  .pipeline .stage.inputs { border-top: 3px solid #1f77b4; }
+  .pipeline .stage.process { border-top: 3px solid #d4a017; }
+  .pipeline .stage.outputs { border-top: 3px solid #2e7d32; }
+  .pipeline .stage h4 {
+    margin: 0 0 8px 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+  }
+  .pipeline .stage ul { margin: 0; padding-left: 16px; }
+  .pipeline .stage li { font-size: 12.5px; line-height: 1.5; margin-bottom: 4px; }
+  .pipeline .arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 22px;
+    line-height: 1;
+    font-weight: 300;
+    user-select: none;
+  }
+  @media (max-width: 820px) {
+    .pipeline { grid-template-columns: 1fr; }
+    .pipeline .arrow { transform: rotate(90deg); padding: 2px 0; }
+  }
+  .method-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 6px 0 4px 0;
+    font-size: 13px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .method-table th, .method-table td {
+    border-bottom: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .method-table thead th {
+    background: #f1f4f9;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--primary-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .method-table tbody tr:last-child td { border-bottom: none; }
+  .method-table .col-priority { width: 70px; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--primary-dark); }
+  .method-table .col-when { width: 30%; }
+  .method-table .col-fill { width: 22%; }
+  .method-table code { background: #f1f4f9; padding: 1px 5px; border-radius: 3px; font-size: 12px; color: var(--primary-dark); }
+  .pill {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    background: #e6eef8;
+    color: var(--primary-dark);
+    white-space: nowrap;
+  }
+  .pill.no { background: #fdecec; color: #8b1f1f; }
+  .pill.yes { background: #e7f3ea; color: #22613a; }
+  .pill.na { background: #eef0f3; color: #555; }
+  .method-details { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 10px; }
+  .method-details:first-of-type { border-top: none; padding-top: 0; margin-top: 8px; }
+  .method-details summary {
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-dark);
+    padding: 6px 0;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .method-details summary::-webkit-details-marker { display: none; }
+  .method-details summary::before {
+    content: '▸';
+    display: inline-block;
+    font-size: 11px;
+    color: var(--text-muted);
+    transition: transform 0.15s ease;
+    transform: translateY(-1px);
+  }
+  .method-details[open] > summary::before { transform: rotate(90deg) translateX(-1px); }
+  .method-details[open] > summary { margin-bottom: 8px; }
+  .method-details ul { padding-left: 22px; }
+  .method-details li { font-size: 12.5px; margin-bottom: 4px; line-height: 1.5; }
+  .privacy-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #e7f3ea;
+    color: #22613a;
+    border: 1px solid #b8dcc2;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+  .privacy-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: #2e7d32; }
+  /* hdr-meta is now a light bar below the tab-bar, outside the dark header */
+  .hdr-meta {
+    display: flex; flex-wrap: wrap; align-items: center;
+    gap: 10px 18px;
+    background: #f0f4f9;
+    border-bottom: 1px solid var(--border);
+    padding: 6px 32px;
+  }
+  .hdr-meta p { margin: 0; font-size: 13px; }
+  /* .header-privacy now sits on the light hdr-meta bar — use default badge colours */
+  .header-privacy {
+    background: #e7f3ea;
+    color: #22613a;
+    border-color: #b8dcc2;
+    font-weight: 500;
+  }
+  .header-privacy .dot { background: #2e7d32; }
+  details.themes { margin-top: 14px; }
+  details.themes summary { cursor: pointer; font-weight: 500; color: var(--primary-dark); padding: 6px 0; }
+  details.themes ul { padding-left: 20px; margin: 8px 0; }
+  details.themes li { margin-bottom: 6px; font-size: 13px; }
+  /* Bundled-files status row — auto-fetched CCM + PDF shown inline */
+  .bundled-status {
+    display: flex; flex-wrap: wrap; gap: 8px 18px;
+    margin-top: 14px; padding: 8px 12px;
+    background: #f0f6fc; border: 1px solid #d0dcea;
+    border-radius: var(--radius); font-size: 12.5px; align-items: center;
+  }
+  .bundled-item { display: inline-flex; align-items: center; gap: 5px; color: var(--text-muted); }
+  .bundled-item.ok   { color: #128a5a; font-weight: 500; }
+  .bundled-item.err  { color: #c0392b; font-weight: 500; }
+  .bundled-item .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+  /* Bundled-file version panel — shows filename, quarter, size, SHA-256 prefix */
+  .file-version-panel {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .fv-heading {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.45px; color: var(--text-muted); margin-bottom: 7px;
+  }
+  .fv-table { border-collapse: collapse; width: 100%; }
+  .fv-table th, .fv-table td {
+    text-align: left; padding: 3px 12px 3px 0;
+    font-size: 11.5px; vertical-align: top;
+  }
+  .fv-table th { font-weight: 600; color: var(--text-muted); border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+  .fv-table td { color: var(--text); border-bottom: 1px solid #edf0f4; }
+  .fv-table tr:last-child td { border-bottom: none; }
+  .fv-hash { font-family: ui-monospace, "SF Mono", "Fira Code", monospace; letter-spacing: 0.3px; font-size: 11px; color: #4a5568; }
+  .fv-ok   { color: #128a5a; font-weight: 500; }
+  .fv-warn { color: #b45309; }
+
+  footer {
+    margin-top: 40px; padding: 20px 24px 28px; border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--text-muted); line-height: 1.55;
+  }
+  /* ---- Cybernion brand footer ---- */
+  .cyb-footer {
+    background: #1a2744;
+    padding: 0 24px; /* side padding for narrow viewports; content centred via inner container */
+  }
+  .cyb-footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px 0;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 24px;
+  }
+  .cyb-footer-logo { height: 60px; width: auto; display: block; }
+  .cyb-footer-center {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 6px 18px;
+    font-size: 14px; color: #ffffff;
+  }
+  .cyb-footer-center a { color: #ffffff; text-decoration: underline; text-underline-offset: 2px; }
+  .cyb-footer-center a:hover { color: #2dd4bf; }
+  .cyb-footer-social { display: flex; align-items: center; gap: 16px; }
+  .cyb-footer-social a { color: #ffffff; display: flex; align-items: center; transition: color 0.15s; }
+  .cyb-footer-social a:hover { color: #2dd4bf; }
+  .cyb-footer-social svg { width: 18px; height: 18px; fill: currentColor; }
+  footer .fineprint { font-size: 11.5px; }
+
+  /* ===== TAB 3 — ISM Version Compare ================================ */
+  .cmp-picker-row {
+    display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-end; margin-bottom: 4px;
+  }
+  .cmp-picker-row > div { flex: 1 1 200px; max-width: 320px; }
+  .cmp-charts-row {
+    display: grid;
+    grid-template-columns: 1fr minmax(220px, 320px);
+    gap: 20px;
+    align-items: start;
+  }
+  .cmp-chart-box {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
+  .cmp-chart-box h3 {
+    margin: 0 0 12px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--primary-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .cmp-chart-bar   { height: 280px; position: relative; }
+  .cmp-chart-donut { height: 240px; position: relative; }
+  @media (max-width: 860px) {
+    .cmp-charts-row { grid-template-columns: 1fr; }
+  }
+
+  /* ===== TAB BAR ===================================================== */
+  .tab-bar {
+    background: var(--surface);
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    gap: 0;
+    padding: 0 32px;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 500;
+    margin-bottom: -2px;
+    padding: 13px 20px 10px;
+  }
+  .tab-btn:hover { color: var(--primary); background: #f5f9fd; }
+  .tab-btn.active {
+    border-bottom-color: var(--primary);
+    color: var(--primary-dark);
+    font-weight: 600;
+  }
+
+  /* ===== TAB 1 — CREATE SSP-A ======================================= */
+  .sspa-banner {
+    background: #eef3f9;
+    border: 1px solid #c8d9ee;
+    border-left: 4px solid var(--primary);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .sspa-banner-eyebrow { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #2e75b6; margin-bottom: 6px; }
+  .sspa-banner-eyebrow .eyebrow-icon { font-size: 14px; }
+  .sspa-banner strong { color: var(--primary-dark); display: block; margin-bottom: 5px; font-size: 13.5px; }
+  .sspa-banner p { margin: 0; color: var(--text); }
+
+  /* Source selection — radio cards */
+  .sspa-source-options { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+  .sspa-source-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    cursor: pointer;
+    flex: 1 1 220px;
+    background: #fafbfc;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .sspa-source-option:hover { border-color: var(--primary); background: #f0f6fc; }
+  .sspa-source-option.selected { border-color: var(--primary); background: #eef3f9; box-shadow: 0 0 0 2px rgba(46,117,182,0.15); }
+  .sspa-source-option input[type="radio"] { margin-top: 2px; flex-shrink: 0; }
+  .sspa-source-label { display: flex; flex-direction: column; gap: 3px; }
+  .sspa-source-label strong { font-size: 13px; color: var(--text); }
+  .sspa-source-label .hint { font-size: 12px; color: var(--text-muted); }
+
+  /* NA count badge */
+  .sspa-na-badge {
+    display: inline-block;
+    background: #fff8e6;
+    border: 1px solid #f0cc75;
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #5a3e00;
+    line-height: 1.45;
+  }
+  .sspa-na-badge strong { color: #3d2800; }
+
+  /* Guidelines list — 3-column grid on wide screens */
+  #sspa-guidelines-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    align-items: start;
+  }
+  @media (max-width: 1100px) { #sspa-guidelines-list { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 640px)  { #sspa-guidelines-list { grid-template-columns: 1fr; } }
+
+  /* Group labels span all columns */
+  .sspa-gl-group-label {
+    grid-column: 1 / -1;
+    font-size: 13px; font-weight: 700; color: var(--primary-dark);
+    text-transform: uppercase; letter-spacing: 0.3px;
+    margin: 0 0 4px;
+  }
+
+  .sspa-guideline-item {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    background: var(--surface);
+    transition: background 0.1s;
+  }
+  .sspa-guideline-item.out-of-scope { background: #fdf6f6; border-left: 3px solid #c27ba0; }
+  .sspa-gl-header { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+  .sspa-gl-label { display: flex; align-items: baseline; gap: 8px; cursor: pointer; flex-shrink: 0; }
+  .sspa-gl-label input[type="checkbox"] { margin-top: 1px; flex-shrink: 0; }
+  .sspa-gl-name { font-size: 13px; font-weight: 600; color: var(--primary-dark); }
+  .sspa-gl-pretick-tag {
+    font-size: 11px;
+    color: #2d5c1d;
+    background: #e7f3ea;
+    border: 1px solid #b8dcc2;
+    border-radius: 4px;
+    padding: 2px 7px;
+    white-space: normal;
+    max-width: 560px;
+    line-height: 1.4;
+  }
+  .sspa-gl-description { margin: 0 0 0 24px; font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
+  .sspa-gl-justification { margin: 8px 0 0 24px; }
+  .sspa-gl-just-label { font-size: 11.5px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; display: block; margin-bottom: 4px; }
+  .sspa-gl-justification textarea { width: 100%; font-size: 12.5px; font-family: inherit; border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 6px 8px; resize: vertical; min-height: 52px; color: var(--text); }
+  .sspa-gl-justification textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(46,117,182,0.12); }
+
+  /* Upload drop zone inside Tab 1 */
+  #sspa-drop-zone {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 10px;
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius);
+    background: #fafbfc;
+    cursor: pointer;
+  }
+  #sspa-drop-zone.drag-over { background: #e8f2fc; outline: 2px dashed var(--primary); outline-offset: 2px; }
+  #sspa-drop-zone input[type="file"] { flex: 1; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main-content">Skip to main content</a>
+
+<header>
+  <div class="hdr-row">
+    <div class="hdr-brand">
+      <a href="https://cybernion.com.au/" target="_blank" rel="noopener" aria-label="Cybernion home"><img id="hdr-logo-img" class="hdr-logo" alt="Cybernion logo" /></a>
+      <h1>IRAP Pulse — ISM Toolkit for IRAP Readiness and Assessment</h1>
+      <p class="byline">Be IRAP Ready. Always. &mdash; by <a href="https://cybernion.com.au/" target="_blank" rel="noopener">Cybernion</a> &nbsp;&middot;&nbsp; <time datetime="2026-06">Last updated June 2026</time></p>
+    </div>
+    <span class="self-test-group">
+      <span class="self-test-pill pending" id="self-test-pill" role="status" aria-live="polite"
+            title="Startup self-test status">
+        <span class="dot"></span><span id="self-test-label">Running self-test…</span>
+      </span>
+      <span class="self-test-info" tabindex="0" role="button"
+            aria-label="What is the self-test?" aria-describedby="self-test-tip">
+        i
+        <span class="self-test-info-tip" id="self-test-tip" role="tooltip">
+          On every page load the tool runs a small internal fixture (<b>2 New / 2 Updated / 1 Rescinded</b>)
+          through the delta engine to confirm the main comparison logic still behaves as expected.
+          <b>Green</b> means the delta engine passed; <b>red</b> means something in the core
+          comparison logic has broken. This does not replace validation against the current ASD
+          workbook schema — workbook parsing, sheet detection, and column layout are not exercised here.
+        </span>
+      </span>
+    </span>
+  </div>
+</header>
+
+<div class="tab-bar" role="tablist" aria-label="Tool sections">
+  <button class="tab-btn active" id="tab-btn-1" role="tab" aria-selected="true" aria-controls="tab1-panel" tabindex="0">Create SSP-A</button>
+  <button class="tab-btn" id="tab-btn-4" role="tab" aria-selected="false" aria-controls="tab4-panel" tabindex="-1">Create CCM</button>
+  <button class="tab-btn" id="tab-btn-2" role="tab" aria-selected="false" aria-controls="tab2-panel" tabindex="-1">Update SSP-A or CCM</button>
+  <button class="tab-btn" id="tab-btn-3" role="tab" aria-selected="false" aria-controls="tab3-panel" tabindex="-1">ISM Version Compare</button>
+</div>
+<div class="hdr-meta">
+  <span class="privacy-badge header-privacy"><span class="dot" aria-hidden="true"></span>Your uploaded files are processed locally in your browser. They are not uploaded anywhere.</span>
+</div>
+
+<main id="main-content" tabindex="-1">
+
+<!-- ========== TAB 1: CREATE SSP-A ========== -->
+<div id="tab1-panel" role="tabpanel" aria-labelledby="tab-btn-1">
+
+  <section class="sspa-banner">
+    <div class="sspa-banner-eyebrow"><span class="eyebrow-icon">⚠</span> Before you start</div>
+    <strong>Focus on the intent of ISM requirements, not just the letter.</strong>
+    <p>A common approach when completing a System Security Plan-Annex (SSP-A) is reading each control literally and marking it Not Applicable because the wording does not seem to fit. The ISM is outcome-focused - the intent of a control is as important as the precise phrasing or whether your organisation uses the exact terminology in the requirement.</p>
+    <p style="margin-top:8px;">Three things to keep in mind before you start:</p>
+    <ul style="margin:6px 0 0 18px; padding:0; font-size:13px; line-height:1.6;">
+      <li><b>Not meeting a control is different from that control not applying.</b> Use Not Applicable only where there is a genuine architectural or organisational reason — for example, physical security controls for a system with no on-premises footprint.</li>
+      <li><b>Even where responsibility is delegated</b> — to a cloud provider, a managed security service, or another team — the organisation retains accountability and must be able to demonstrate how that accountability is fulfilled.</li>
+      <li><b>Board-level controls apply to every organisation regardless of size.</b> For example, if your organisation does not have a formal board of directors — a committee, leader, or individual with right authority may fulfil the intent of executive accountability for cyber security.</li>
+    </ul>
+  </section>
+
+  <section id="sspa-source-section">
+    
+    <div class="step-grid" style="margin-bottom:8px;">
+      <div>
+        <label for="sspa-org-name">Organisation name <span class="req-mark" aria-hidden="true">*</span></label>
+        <input type="text" id="sspa-org-name" placeholder="e.g. Acme Corp" autocomplete="organization" />
+      </div>
+      <div>
+        <label for="sspa-classification">Information Classification <span class="req-mark" aria-hidden="true">*</span></label>
+        <select id="sspa-classification">
+          <option value="" disabled selected>Select classification…</option>
+          <option value="NC">NC (Not Classified)</option>
+          <option value="OFFICIAL:Sensitive">OFFICIAL: Sensitive</option>
+          <option value="PROTECTED">PROTECTED</option>
+          <option value="SECRET">SECRET</option>
+          <option value="TOP SECRET">TOP SECRET</option>
+        </select>
+      </div>
+    </div>
+    <label>SSP-A template source <span class="req-mark" aria-hidden="true">*</span></label>
+    <div class="sspa-source-options" role="radiogroup" aria-label="SSP-A template source">
+      <label class="sspa-source-option" id="sspa-src-bundled-card">
+        <input type="radio" name="sspa-source" value="bundled" id="sspa-src-bundled" />
+        <span class="sspa-source-label">
+          <strong>Use ASD's current SSP-A Template (.xlsx)</strong>
+          <span class="hint">Embedded in this tool, fetched automatically</span>
+        </span>
+      </label>
+      <label class="sspa-source-option" id="sspa-src-upload-card">
+        <input type="radio" name="sspa-source" value="upload" id="sspa-src-upload" />
+        <span class="sspa-source-label">
+          <strong>Upload your own SSP-A Template (.xlsx)</strong>
+          <span class="hint">An ASD SSP-A template you have downloaded from cyber.gov.au</span>
+        </span>
+      </label>
+    </div>
+
+    <div id="sspa-upload-row" class="hidden" style="margin-top:10px;">
+      <div class="drop-zone" id="sspa-drop-zone">
+        <input type="file" id="sspa-file-upload" accept=".xlsx" aria-label="Upload SSP-A template (.xlsx)" />
+        <span style="font-size:12px; color:var(--text-muted); white-space:nowrap;">Drop here or click to browse</span>
+      </div>
+      <p style="margin:4px 0 0; font-size:11.5px; color:var(--text-muted);">Maximum file size: 5 MB (.xlsx only)</p>
+    </div>
+
+    <div id="sspa-template-status" aria-live="polite" style="margin-top:8px; font-size:12.5px;"></div>
+    <div class="file-version-panel hidden" id="sspa-file-info" aria-live="polite">
+      <div class="fv-heading">Bundled template file</div>
+      <table class="fv-table" aria-label="SSP-A template version">
+        <thead><tr><th>File</th><th>Quarter</th><th>Size</th><th>SHA-256 (first 16 chars)</th><th>Status</th></tr></thead>
+        <tbody id="fv-rows-tab1"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div id="sspa-steps" class="hidden">
+
+    <div id="sspa-na-count" class="hidden" aria-live="polite" style="margin-bottom:4px;"></div>
+
+    <!-- Step 1 -->
+    <section id="sspa-step2">
+      <h2>Select Applicable ISM Guidelines</h2>
+      <p style="margin:0 0 16px; font-size:13px; color:var(--text-muted);">Select every ISM Guideline that is in scope for this assessment. Pre-selected Guidelines apply to nearly every system — unselect any that genuinely do not apply and provide a justification. All controls under an unselected Guideline will be marked Not Applicable in the generated SSP-A.</p>
+      <div id="sspa-guideline-name-warning" aria-live="polite" style="display:none; margin-bottom:14px; padding:10px 14px; background:#fff8e6; border:1px solid #f0c040; border-radius:var(--radius); font-size:12.5px; color:#6b4800;"></div>
+      <div id="sspa-guidelines-list" role="group" aria-label="ISM Guidelines in scope"></div>
+    </section>
+
+    <!-- Step 2 -->
+    <section id="sspa-generate-section">
+      <h2>Generate</h2>
+      <div id="sspa-generate-error" role="alert" aria-live="assertive" style="display:none; color:#c0392b; font-size:13px; margin-bottom:10px;"></div>
+      <button class="primary" id="btn-sspa-generate">⬇ Download SSP-A (.xlsx)</button>
+      <p style="margin:10px 0 0; font-size:12px; color:var(--text-muted);">Controls are marked Not Applicable based on your classification and scope selections. All other controls remain as Not Assessed. The Principles tab is not updated.</p>
+    </section>
+
+  </div><!-- end #sspa-steps -->
+
+<details class="about-section" id="about-section-tab1">
+<summary>About the SSP-A Generator</summary>
+<section class="methodology">
+  <h2>About the SSP-A Generator</h2>
+
+  <details class="method-details">
+    <summary>How this tool works</summary>
+    <p class="method-lead">Select your system's information classification, load an SSP-A template (bundled or your own upload), then download. The tool writes Not Applicable and a standard justification into every control excluded by your classification or scope. The implementation status of all other ISM controls remains as Not Assessed — for you or the IRAP assessor to update manually.</p>
+    <div class="pipeline" role="group" aria-label="Tool pipeline: inputs, process, outputs">
+      <div class="stage inputs">
+        <h4>1. Inputs</h4>
+        <ul>
+          <li><b>SSP-A template</b>: bundled (current quarter, auto-fetched) or your own ASD template</li>
+          <li><b>Classification</b>: NC / OFFICIAL: Sensitive / PROTECTED / SECRET / TOP SECRET</li>
+          <li><b>Scope</b>: which of the 22 ISM Guidelines apply to the assessed system</li>
+        </ul>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="stage process">
+        <h4>2. Process</h4>
+        <ul>
+          <li><b>Classification check</b>: any control where the applicability column for your classification is "No" is marked Not Applicable</li>
+          <li><b>Scope check</b>: any control under an unticked Guideline is marked Not Applicable; classification takes precedence where both apply</li>
+          <li><b>Comment written</b>: a standard justification sentence is added to the Comments column for each marked control</li>
+        </ul>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="stage outputs">
+        <h4>3. Outputs</h4>
+        <ul>
+          <li><b>Pre-populated SSP-A (.xlsx)</b>: Updated spreadsheet with Not Applicable and justification added; all other ISM controls remain as Not Assessed without any comment</li>
+          <li><b>Principles sheet</b>: not updated; all principles always apply</li>
+          <li><b>Info sheet</b>: not updated; unfortunately, the tool can't always retain the format of the original file</li>
+        </ul>
+      </div>
+    </div>
+  </details>
+
+  <details class="method-details">
+    <summary>What this tool does not do</summary>
+    <p>This tool attempts to discern which ISM controls are not applicable to the assessed system. However, it cannot determine whether a control is genuinely applicable or not. You and the assessor still need to:</p>
+    <ul style="padding-left:22px; margin:8px 0 8px;">
+      <li>Assess every remaining control and record whether it is Implemented, Partially Implemented, Planned, or Not Implemented</li>
+      <li>Verify that every Not Applicable decision made here is defensible in the context of the actual system</li>
+      <li>Complete the Principles sheet/tab; it is not updated by this tool</li>
+      <li>Review and adjust scope or classification selections before finalising the SSP-A</li>
+    </ul>
+    <p>Classification and scope selections are guiding principles — the outputs of this tool are starting points, not conclusions.</p>
+  </details>
+
+  <details class="method-details">
+    <summary>Assumptions the tool makes about the template</summary>
+    <table class="method-table" aria-label="Assumptions">
+      <thead>
+        <tr>
+          <th style="width:42%;">Assumption</th>
+          <th>What goes wrong if untrue</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>The template follows the ASD SSP-A structure — a spreadsheet with ISM-XXXX identifiers and NC / OS / P / S / TS applicability columns.</td>
+          <td>Column detection fails and the download button shows an error rather than producing an incorrect file.</td>
+        </tr>
+        <tr>
+          <td>Guideline names in the template match the names shown in the scope checklist exactly.</td>
+          <td>Controls under mismatched Guideline names will not be marked Not Applicable even if the Guideline is unticked.</td>
+        </tr>
+        <tr>
+          <td>The template is blank — Implementation column values are "Not Assessed".</td>
+          <td>Any cells already containing assessment decisions will be overwritten where a classification or scope exclusion applies.</td>
+        </tr>
+      </tbody>
+    </table>
+  </details>
+
+  <details class="method-details">
+    <summary>Disclaimer and limitation of liability</summary>
+    <p style="font-size:13px; margin: 8px 0 4px;">This tool is provided on an <b>&ldquo;as is&rdquo;</b> and <b>&ldquo;as available&rdquo;</b> basis, without warranty of any kind. The output is a <b>decision-support aid, not professional, legal, compliance, assurance or IRAP advice</b>. Every Not Applicable decision produced by this tool must be reviewed and confirmed against the actual system under assessment. You remain solely responsible for the accuracy and defensibility of all Not Applicable determinations and for ensuring the final SSP-A meets your organisation&rsquo;s assurance, accreditation and record-keeping obligations. To the maximum extent permitted by law, <b>in no event shall Cybernion be liable</b> for any direct, indirect, incidental, special, consequential or punitive damages arising from your use of this tool.</p>
+  </details>
+
+  <details class="method-details">
+    <summary>Security and transparency</summary>
+    <p style="margin: 8px 0 6px;">This is a static, client-side web tool with no backend, no account, and no server-side processing. The HTML file contains the application source; bundled workbook and PDF assets and pinned JavaScript libraries are loaded as static resources. Everything runs in your browser.</p>
+    <ul style="padding-left:22px; margin:8px 0 10px;">
+      <li><b>No data leaves your machine.</b> Your SSP-A template and all selections are processed entirely in-browser. Nothing is transmitted to any server — not even Cybernion&rsquo;s. Apart from loading the pinned JavaScript libraries and the bundled SSP-A template, your uploaded files and entered data are not transmitted anywhere.</li>
+      <li><b>Third-party libraries.</b> Four open-source JavaScript libraries are loaded at startup: <a href="https://github.com/gitbrent/xlsx-js-style" target="_blank" rel="noopener">xlsx-js-style v1.2.0</a> (Excel read/write) from jsDelivr, <a href="https://mozilla.github.io/pdf.js/" target="_blank" rel="noopener">PDF.js v3.11.174</a> (PDF parsing) from Cloudflare CDN, <a href="https://www.chartjs.org/" target="_blank" rel="noopener">Chart.js v4.4.4</a> (ISM Version Compare charts) from jsDelivr, and <a href="https://chartjs-plugin-datalabels.netlify.app/" target="_blank" rel="noopener">chartjs-plugin-datalabels v2.2.0</a> (chart data labels) from jsDelivr. All four are version-pinned with SHA-384 Subresource Integrity (SRI) hashes — the browser will refuse to execute any file that does not match the pinned hash. The PDF.js worker is loaded as a Web Worker (not a script tag) so browser-native SRI does not apply; the tool fetches it, verifies its SHA-384 hash in JavaScript before use, and rejects any mismatch. A fifth library, <a href="https://github.com/101arrowz/fflate" target="_blank" rel="noopener">fflate v0.8.2</a> (a small, zero-dependency ZIP library, MIT licensed), is not loaded from any CDN — it is compiled directly into the application source at build time and used by the Create CCM tab to edit the spreadsheet losslessly, so dropdown lists and all other workbook features are preserved.</li>
+      <li><b>Vulnerability scanning.</b> This html tool and all four JavaScript libraries were scanned against public vulnerability databases prior to release. No known vulnerabilities were identified at the versions pinned above.</li>
+      <li><b>Static resource review.</b> The tool and its bundled assets were reviewed as static resources prior to publication. No active content, no dynamic code evaluation, and no third-party tracking scripts are present.</li>
+      <li><b>Source transparency.</b> The application source is contained in the HTML file and can be inspected at any time in your browser&rsquo;s developer tools or by opening the file in a text editor. Bundled assets (workbooks, PDF) and JavaScript libraries are separate static resources loaded at runtime.</li>
+      <li><b>Bundled file integrity.</b> Each time the tool loads, it computes a SHA-256 hash of the bundled SSP-A template in your browser and compares it against a known-good hash embedded in the HTML at release time. A &ldquo;Verified&rdquo; result confirms the file served to you is byte-for-byte identical to the file tested by Cybernion. A hash mismatch blocks the template from loading — the tool will not proceed with a file it cannot verify. The expected hashes are updated in the source with each quarterly release.</li>
+    </ul>
+    <p style="font-size:12px; color:var(--text-muted);">If you identify a security concern, please <a href="https://cybernion.com.au/contact/" target="_blank" rel="noopener">Contact Us</a>.</p>
+  </details>
+
+  <details class="method-details">
+    <summary>Licence and attribution</summary>
+    <p class="fineprint" style="margin:8px 0 4px;">
+      &copy; 2026 <a href="https://cybernion.com.au/" target="_blank" rel="noopener">Cybernion</a>. All rights reserved. This tool is provided free of charge for use by security practitioners. No part of this tool may be reproduced, redistributed, or used to create derivative works without prior written permission from Cybernion. &ldquo;ISM&rdquo;, &ldquo;IRAP&rdquo; and related terms refer to work published by the Australian Signals Directorate / ACSC. This tool is an independent utility and is <b>not endorsed by, affiliated with, or sponsored by</b> ASD, ACSC or the Australian Government.
+    </p>
+  </details>
+
+</section>
+</details>
+
+</div><!-- end #tab1-panel -->
+
+<!-- ========== TAB 4: CREATE CCM ========== -->
+<div id="tab4-panel" role="tabpanel" aria-labelledby="tab-btn-4" class="hidden">
+
+  <section class="sspa-banner">
+    <div class="sspa-banner-eyebrow"><span class="eyebrow-icon">⚠</span> Before you start</div>
+    <strong>Focus on the intent of ISM requirements, not just the letter.</strong>
+    <p>This tab produces a pre-scoped Cloud Controls Matrix (CCM). It applies the same Not Applicable logic as the SSP-A generator, but writes to both the provider and consumer columns of the CCM. The ISM is outcome-focused — the intent of a control matters as much as the precise phrasing or whether your organisation uses the exact terminology in the requirement.</p>
+    <p style="margin-top:8px;">Three things to keep in mind before you start:</p>
+    <ul style="margin:6px 0 0 18px; padding:0; font-size:13px; line-height:1.6;">
+      <li><b>Not meeting a control is different from that control not applying.</b> Use Not Applicable only where there is a genuine architectural or organisational reason — for example, physical security controls for a system with no on-premises footprint.</li>
+      <li><b>Even where responsibility is delegated</b> — to a cloud provider, a managed security service, or another team — the organisation retains accountability and must be able to demonstrate how that accountability is fulfilled.</li>
+      <li><b>Board-level controls apply to every organisation regardless of size.</b> For example, if your organisation does not have a formal board of directors — a committee, leader, or individual with right authority may fulfil the intent of executive accountability for cyber security.</li>
+    </ul>
+  </section>
+
+  <section id="ccm-source-section">
+
+    <div class="step-grid" style="margin-bottom:8px;">
+      <div>
+        <label for="ccm-org-name">Organisation name <span class="req-mark" aria-hidden="true">*</span></label>
+        <input type="text" id="ccm-org-name" placeholder="e.g. Acme Corp" autocomplete="organization" />
+      </div>
+      <div>
+        <label for="ccm-classification">Information Classification <span class="req-mark" aria-hidden="true">*</span></label>
+        <select id="ccm-classification">
+          <option value="" disabled selected>Select classification…</option>
+          <option value="NC">NC (Not Classified)</option>
+          <option value="OFFICIAL:Sensitive">OFFICIAL: Sensitive</option>
+          <option value="PROTECTED">PROTECTED</option>
+          <option value="SECRET">SECRET</option>
+          <option value="TOP SECRET">TOP SECRET</option>
+        </select>
+      </div>
+    </div>
+    <label>CCM template source <span class="req-mark" aria-hidden="true">*</span></label>
+    <div class="sspa-source-options" role="radiogroup" aria-label="CCM template source">
+      <label class="sspa-source-option" id="ccm-src-bundled-card">
+        <input type="radio" name="ccm-source" value="bundled" id="ccm-src-bundled" />
+        <span class="sspa-source-label">
+          <strong>Use ASD's current CCM Template (.xlsx)</strong>
+          <span class="hint">Embedded in this tool, fetched automatically</span>
+        </span>
+      </label>
+      <label class="sspa-source-option" id="ccm-src-upload-card">
+        <input type="radio" name="ccm-source" value="upload" id="ccm-src-upload" />
+        <span class="sspa-source-label">
+          <strong>Upload your own CCM Template (.xlsx)</strong>
+          <span class="hint">An ASD Cloud Controls Matrix you have downloaded from cyber.gov.au</span>
+        </span>
+      </label>
+    </div>
+
+    <div id="ccm-upload-row" class="hidden" style="margin-top:10px;">
+      <div class="drop-zone" id="ccm-drop-zone">
+        <input type="file" id="ccm-file-upload" accept=".xlsx" aria-label="Upload CCM template (.xlsx)" />
+        <span style="font-size:12px; color:var(--text-muted); white-space:nowrap;">Drop here or click to browse</span>
+      </div>
+      <p style="margin:4px 0 0; font-size:11.5px; color:var(--text-muted);">Maximum file size: 5 MB (.xlsx only)</p>
+    </div>
+
+    <div id="ccm-template-status" aria-live="polite" style="margin-top:8px; font-size:12.5px;"></div>
+    <div class="file-version-panel hidden" id="ccm-file-info" aria-live="polite">
+      <div class="fv-heading">Bundled template file</div>
+      <table class="fv-table" aria-label="CCM template version">
+        <thead><tr><th>File</th><th>Quarter</th><th>Size</th><th>SHA-256 (first 16 chars)</th><th>Status</th></tr></thead>
+        <tbody id="fv-rows-tab4"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div id="ccm-steps" class="hidden">
+
+    <div id="ccm-na-count" class="hidden" aria-live="polite" style="margin-bottom:4px;"></div>
+
+    <!-- Step 1 -->
+    <section id="ccm-step2">
+      <h2>Select Applicable ISM Guidelines</h2>
+      <p style="margin:0 0 16px; font-size:13px; color:var(--text-muted);">Select every ISM Guideline that is in scope for this assessment. Pre-selected Guidelines apply to nearly every system — unselect any that genuinely do not apply and provide a justification. All controls under an unselected Guideline will be marked Not Applicable in the generated CCM.</p>
+      <div id="ccm-guideline-name-warning" aria-live="polite" style="display:none; margin-bottom:14px; padding:10px 14px; background:#fff8e6; border:1px solid #f0c040; border-radius:var(--radius); font-size:12.5px; color:#6b4800;"></div>
+      <div id="ccm-guidelines-list" role="group" aria-label="ISM Guidelines in scope"></div>
+    </section>
+
+    <!-- Step 2 -->
+    <section id="ccm-generate-section">
+      <h2>Generate</h2>
+      <div id="ccm-generate-error" role="alert" aria-live="assertive" style="display:none; color:#c0392b; font-size:13px; margin-bottom:10px;"></div>
+      <button class="primary" id="btn-ccm-generate">⬇ Download CCM (.xlsx)</button>
+      <p style="margin:10px 0 0; font-size:12px; color:var(--text-muted);">Controls are marked Not Applicable based on your classification and scope selections, across both the provider and consumer columns. All other controls remain as Not Assessed. The Principles tab is not updated.</p>
+    </section>
+
+  </div><!-- end #ccm-steps -->
+
+<details class="about-section" id="about-section-tab4">
+<summary>About the CCM Generator</summary>
+<section class="methodology">
+  <h2>About the CCM Generator</h2>
+
+  <details class="method-details">
+    <summary>How this tool works</summary>
+    <p class="method-lead">Select your system's information classification, load a Cloud Controls Matrix template (bundled or your own upload), then download. The tool writes Not Applicable and a standard justification into every control excluded by your classification or scope, across both the provider and consumer columns. The implementation status of all other ISM controls remains as Not Assessed — for you or the IRAP assessor to update manually.</p>
+    <div class="pipeline" role="group" aria-label="Tool pipeline: inputs, process, outputs">
+      <div class="stage inputs">
+        <h4>1. Inputs</h4>
+        <ul>
+          <li><b>CCM template</b>: bundled (current quarter, auto-fetched) or your own ASD CCM</li>
+          <li><b>Classification</b>: NC / OFFICIAL: Sensitive / PROTECTED / SECRET / TOP SECRET</li>
+          <li><b>Scope</b>: which of the 22 ISM Guidelines apply to the assessed system</li>
+        </ul>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="stage process">
+        <h4>2. Process</h4>
+        <ul>
+          <li><b>Classification check</b>: any control where the applicability column for your classification is "No" is marked Not Applicable</li>
+          <li><b>Scope check</b>: any control under an unticked Guideline is marked Not Applicable; classification takes precedence where both apply</li>
+          <li><b>Comment written</b>: a standard justification sentence is added to the provider and consumer Comments columns for each marked control</li>
+        </ul>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="stage outputs">
+        <h4>3. Outputs</h4>
+        <ul>
+          <li><b>Pre-scoped CCM (.xlsx)</b>: only the Controls tab (ISM-XXXX) is changed — excluded controls get Not Applicable in the provider and consumer status columns, None in the Responsibility columns, and the justification in both Comments columns; all other ISM controls remain as Not Assessed without any comment</li>
+          <li><b>Principles sheet</b>: left exactly as supplied; all principles always apply</li>
+          <li><b>Info sheet</b>: left exactly as supplied</li>
+        </ul>
+      </div>
+    </div>
+  </details>
+
+  <details class="method-details">
+    <summary>What this tool does not do</summary>
+    <p>This tool attempts to discern which ISM controls are not applicable to the assessed system. However, it cannot determine whether a control is genuinely applicable or not. You and the assessor still need to:</p>
+    <ul style="padding-left:22px; margin:8px 0 8px;">
+      <li>Assess every remaining control and record whether it is Implemented, Partially Implemented, Planned, or Not Implemented</li>
+      <li>Verify that every Not Applicable decision made here is defensible in the context of the actual system</li>
+      <li>Complete the Principles sheet/tab; it is not updated by this tool</li>
+      <li>Review and adjust scope or classification selections before finalising the CCM</li>
+    </ul>
+    <p>Classification and scope selections are guiding principles — the outputs of this tool are starting points, not conclusions.</p>
+  </details>
+
+  <details class="method-details">
+    <summary>Assumptions the tool makes about the template</summary>
+    <table class="method-table" aria-label="Assumptions">
+      <thead>
+        <tr>
+          <th style="width:42%;">Assumption</th>
+          <th>What goes wrong if untrue</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>The template follows the ASD CCM structure — a Controls sheet with ISM-XXXX identifiers, NC / OS / P / S / TS applicability columns, and provider and consumer Implementation / Responsibility / Comments columns.</td>
+          <td>Column detection fails and the download button shows an error rather than producing an incorrect file.</td>
+        </tr>
+        <tr>
+          <td>Guideline names in the template match the names shown in the scope checklist exactly.</td>
+          <td>Controls under mismatched Guideline names will not be marked Not Applicable even if the Guideline is unticked.</td>
+        </tr>
+        <tr>
+          <td>The template is blank — Implementation column values are "Not Assessed".</td>
+          <td>Any cells already containing assessment decisions will be overwritten where a classification or scope exclusion applies.</td>
+        </tr>
+      </tbody>
+    </table>
+  </details>
+
+  <details class="method-details">
+    <summary>Disclaimer and limitation of liability</summary>
+    <p style="font-size:13px; margin: 8px 0 4px;">This tool is provided on an <b>&ldquo;as is&rdquo;</b> and <b>&ldquo;as available&rdquo;</b> basis, without warranty of any kind. The output is a <b>decision-support aid, not professional, legal, compliance, assurance or IRAP advice</b>. Every Not Applicable decision produced by this tool must be reviewed and confirmed against the actual system under assessment. You remain solely responsible for the accuracy and defensibility of all Not Applicable determinations and for ensuring the final CCM meets your organisation&rsquo;s assurance, accreditation and record-keeping obligations. To the maximum extent permitted by law, <b>in no event shall Cybernion be liable</b> for any direct, indirect, incidental, special, consequential or punitive damages arising from your use of this tool.</p>
+  </details>
+
+</section>
+</details>
+
+</div><!-- end #tab4-panel -->
+
+<!-- ========== TAB 2: UPDATE SSP-A (existing tool — untouched) ========== -->
+<div id="tab2-panel" role="tabpanel" aria-labelledby="tab-btn-2" class="hidden">
+
+<!-- ========== STEP 1: PRODUCT DETAILS + FILE UPLOAD ========== -->
+<section id="step-inputs">
+  <div class="step-grid">
+    <div>
+      <label for="org-name">Organisation name <span class="req-mark" aria-hidden="true">*</span></label>
+      <input type="text" id="org-name" placeholder="e.g. Acme Corp" required aria-required="true" autocomplete="organization" />
+    </div>
+    <div>
+      <label for="product-name">Product name <span class="req-mark" aria-hidden="true">*</span></label>
+      <input type="text" id="product-name" placeholder="e.g. Example Cloud Platform" required aria-required="true" />
+    </div>
+    <div>
+      <label for="product-classification">Information Classification <span class="req-mark" aria-hidden="true">*</span></label>
+      <select id="product-classification" required aria-required="true">
+        <option value="" disabled selected>Select classification…</option>
+        <option value="OFFICIAL: Sensitive">OFFICIAL: Sensitive</option>
+        <option value="PROTECTED">PROTECTED</option>
+        <option value="SECRET">SECRET</option>
+        <option value="TOP SECRET">TOP SECRET</option>
+      </select>
+    </div>
+  </div>
+  <div style="margin-top: 12px;">
+    <label for="product-overview">Product overview <span class="hint">(architecture, hosting, key components)</span> <span class="req-mark" aria-hidden="true">*</span></label>
+    <textarea id="product-overview" placeholder="e.g. Azure-hosted multi-tenant SaaS. IRAP accredited to PROTECTED. Key components: identity, monitoring, endpoint protection…" required aria-required="true"></textarea>
+  </div>
+
+  <div style="margin-top: 16px;">
+    <label id="label-baseline" for="file-sspa">Current SSP-A or CCM <span class="req-mark" aria-hidden="true">*</span></label>
+    <div class="drop-zone" id="drop-zone-sspa" style="margin-top:4px; display:flex; gap:8px; align-items:center; padding:8px 10px; border:1px dashed var(--border-strong); border-radius:var(--radius); background:#fafbfc; cursor:pointer;">
+      <input type="file" id="file-sspa" accept=".xlsx" aria-describedby="status-sspa" style="flex:1; font-size:12px;" />
+      <span class="file-status" id="status-sspa" aria-live="polite">Upload or drag and drop here</span>
+      <span style="font-size:11.5px; color:var(--text-muted); white-space:nowrap;">Max 5 MB</span>
+    </div>
+  </div>
+
+  <!-- Bundled CCM + PDF — auto-fetched from server on load -->
+  <div class="bundled-status" id="bundled-status" aria-live="polite">
+    <span class="bundled-item" id="bundled-ccm-item"><span class="dot"></span><span id="bundled-ccm-label">CCM: loading…</span></span>
+    <span class="bundled-item" id="bundled-pdf-item"><span class="dot"></span><span id="bundled-pdf-label">Changes PDF: loading…</span></span>
+  </div>
+  <div class="file-version-panel hidden" id="bundled-file-info" aria-live="polite">
+    <div class="fv-heading">Bundled data files</div>
+    <table class="fv-table" aria-label="Bundled file versions">
+      <thead><tr><th>File</th><th>Quarter</th><th>Size</th><th>SHA-256 (first 16 chars)</th><th>Status</th></tr></thead>
+      <tbody id="fv-rows-tab2"></tbody>
+    </table>
+  </div>
+
+  <p class="req-legend"><span class="req-mark">*</span> Required.</p>
+  <button class="primary" id="btn-compute">Update →</button>
+  <div id="compute-error" role="alert" aria-live="assertive" style="color: #c0392b; margin-top: 10px; font-size: 13px; display: none;"></div>
+  <div id="compute-warning" role="alert" aria-live="polite" style="display: none; margin-top: 10px; padding: 10px 12px; border: 1px solid #c9a227; background: #fff8dc; border-radius: 6px; font-size: 13px; color: #6a4f00;">
+    <div id="compute-warning-text" style="margin-bottom: 10px;"></div>
+    <button id="btn-override" type="button" style="padding: 6px 12px; border: 1px solid #c9a227; background: #fff; color: #6a4f00; border-radius: 4px; font-size: 13px; cursor: pointer; font-weight: 500;">Proceed anyway — my files are correct</button>
+  </div>
+</section>
+
+<!-- ========== STEP 3: DASHBOARD ========== -->
+<section id="step-dashboard" class="hidden">
+  <h2>Change register</h2>
+
+  <div class="meta-bar" id="meta-bar"></div>
+
+  <div class="download-panel" id="download-panel">
+    <span class="dl-title">Downloads</span>
+    <button class="big-dl" id="btn-export-xlsx"><span class="icon">📊</span> Change Register (.xlsx)</button>
+    <button class="big-dl" id="btn-export-sspa"><span class="icon">📋</span> Updated SSP-A or CCM (.xlsx)</button>
+    <button class="big-dl" id="btn-stakeholder-note"><span class="icon">✉</span> Stakeholder Note</button>
+    <span class="dl-auto-notice">Change Status and Previous Description are appended as the last two columns in the Updated SSP-A or CCM file. Info, Information, and Pivot sheets are removed from the Updated export — re-create any pivot against the updated baseline in Excel after download.</span>
+    <span class="dl-auto-notice" style="color:#92400e; background:#fffbeb; border:1px solid #fde68a; border-radius:4px; padding:4px 10px; font-weight:600;">⚠ This tool does not save your work in the browser. Download your files before closing or refreshing this tab.</span>
+  </div>
+
+
+  <div id="summary-cards-wrap"></div>
+
+  <details class="themes" id="themes-block">
+    <summary>Quarterly themes and cross-validation notes</summary>
+    <div id="themes-content"></div>
+  </details>
+
+  <p style="margin:14px 0 8px; font-size:12.5px; color:var(--text-muted);">Browser preview of your Change Register. Use the download buttons above to save a local copy.</p>
+
+  <div class="filter-bar" style="margin-top: 0;" role="search" aria-label="Change-register filters">
+    <div>
+      <label for="filter-kind">Kind</label>
+      <select id="filter-kind">
+        <option value="">All</option>
+        <option value="control">Controls</option>
+        <option value="principle">Principles</option>
+      </select>
+    </div>
+    <div>
+      <label for="filter-change">Change type</label>
+      <select id="filter-change">
+        <option value="">All</option>
+        <option value="New">New</option>
+        <option value="Updated">Updated</option>
+        <option value="Rescinded">Rescinded</option>
+      </select>
+    </div>
+    <div>
+      <label for="filter-search">Search</label>
+      <input type="text" class="search" id="filter-search" placeholder="ISM ID, topic, text..." aria-label="Search within the change register" />
+    </div>
+    <div class="reset">
+      <button class="secondary" id="btn-reset">Reset filters</button>
+    </div>
+    <div class="group-controls">
+      <button id="btn-expand-all" type="button" title="Expand every Guideline group">Expand all</button>
+      <button id="btn-collapse-all" type="button" title="Collapse every Guideline group">Collapse all</button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table class="register" id="register-table">
+      <thead>
+        <tr>
+          <th class="col-id">ISM ID</th>
+          <th class="col-change">Change</th>
+          <th class="col-guideline">Guideline / Function</th>
+          <th class="col-topic">Topic</th>
+          <th class="col-appl">Applicability</th>
+          <th class="col-text">Old vs. new ISM requirement</th>
+          <th class="col-scoping">Baseline implementation status</th>
+          <th class="col-inscope">Applicable</th>
+        </tr>
+      </thead>
+      <tbody id="register-body"></tbody>
+    </table>
+  </div>
+  <div id="register-empty" class="empty-state hidden">No changes match the current filters.</div>
+</section>
+
+<details class="about-section" id="about-section">
+<summary>About the SSP-A or CCM Update Tool</summary>
+<section class="methodology" id="methodology">
+  <h2>About the SSP-A or CCM Update Tool</h2>
+
+  <details class="method-details">
+    <summary>How this tool works</summary>
+    <p class="method-lead">Upload your SSP-A or CCM — the tool compares it against the current-quarter CCM (pre-loaded from the server) and fills in the parts of the review that can be determined mechanically, so the reviewer can focus on the judgement calls.</p>
+
+    <!-- Pipeline diagram: Inputs → Process → Outputs -->
+    <div class="pipeline" role="group" aria-label="Tool pipeline: inputs, process, outputs">
+      <div class="stage inputs">
+        <h4>1. Inputs</h4>
+        <ul>
+          <li><b>Your SSP-A or CCM</b> — uploaded by you as the baseline</li>
+          <li><b>Current-quarter CCM</b> — pre-loaded automatically</li>
+          <li><b>ISM Changes PDF</b> — pre-loaded automatically</li>
+        </ul>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="stage process">
+        <h4>2. Process</h4>
+        <ul>
+          <li><b>Detect quarters</b> from sheet names or column fingerprints</li>
+          <li><b>Diff IDs</b> → New / Updated / Rescinded (Updated means the description, guideline, maturity level, or applicability changed; the Changed Fields column shows exactly what)</li>
+          <li><b>Enrich</b> each row with baseline scoping</li>
+          <li><b>Pre-fill</b> Applicable indicator + Triage for the downloaded register (rules below)</li>
+        </ul>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="stage outputs">
+        <h4>3. Outputs</h4>
+        <ul>
+          <li><b>Dashboard</b> — filter and search the delta in your browser</li>
+          <li><b>Change Register (.xlsx)</b> — Summary, Controls, Principles, Methodology, E8 Snapshot</li>
+          <li><b>Updated SSP-A or CCM (.xlsx)</b> — baseline refreshed with current CCM changes: description (where text changed), guideline, applicability, maturity level, and classification-based NA scoping where applicable</li>
+          <li><b>Stakeholder note</b> + <b>share summary</b></li>
+        </ul>
+      </div>
+    </div>
+  </details>
+
+  <details class="method-details">
+    <summary>Assumptions the tool makes about the inputs</summary>
+    <p style="margin: 0 0 8px 0;">The delta and pre-fills rest on a few assumptions about how your baseline file and the CCM are structured. If any are untrue the output will still look plausible but won't be trustworthy &mdash; worth a glance before you upload.</p>
+    <table class="method-table" aria-label="Assumptions the tool makes">
+      <thead>
+        <tr>
+          <th style="width: 40%;">Assumption</th>
+          <th>What goes wrong if it&rsquo;s untrue</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>The SSP-A lists every ISM control in force when it was last finalised, including rows marked <code>Not Applicable</code>.</td>
+          <td>If Not-Applicable rows were deleted instead of marked NA, they reappear in the current CCM and get counted as New.</td>
+        </tr>
+        <tr>
+          <td>Control identifiers are stable across quarters unless ASD rescinds and re-issues.</td>
+          <td>A rename surfaces as one Rescinded + one New item. Likely pairs are flagged as hints but not auto-linked.</td>
+        </tr>
+        <tr>
+          <td>A control or principle is classified as <b>Updated</b> only when substantive requirement text or selected assessment-relevant fields change. ASD Updated date, Topic, Section, Function, Revision, and Provider Responsibility are metadata-only fields; they refresh silently in the exported baseline but never independently trigger Updated.<br><br>
+          <b>Fields that trigger Updated:</b> Description · Applicability (NC, OS, P, S, TS) · Maturity mapping (ML1, ML2, ML3) · Guideline.<br>
+          <b>Metadata-only fields (silent refresh, no trigger):</b> ASD Updated date · Topic · Section · Function · Revision · Provider Responsibility.</td>
+          <td>The Changed Fields column in the register shows exactly which of the above fields changed for each Updated row.</td>
+        </tr>
+        <tr>
+          <td>The scope of the system and ISM Guidelines has not changed materially since the last SSP-A was finalised.</td>
+          <td>Pre-fills come straight from the baseline file. After an architectural change, pre-filled Not-Applicable decisions may be stale.</td>
+        </tr>
+        <tr>
+          <td>Essential Eight maturity lives in the CCM&rsquo;s <code>ML1</code> / <code>ML2</code> / <code>ML3</code> columns.</td>
+          <td>If ASD restructures those columns the E8 snapshot populates as empty. The startup self-test catches gross drift.</td>
+        </tr>
+      </tbody>
+    </table>
+  </details>
+
+  <details class="method-details">
+    <summary>Pre-fill rules (applied to the downloaded Change Register)</summary>
+    <table class="method-table" aria-label="Pre-fill rules">
+      <thead>
+        <tr>
+          <th class="col-priority">Priority</th>
+          <th class="col-when">Trigger condition</th>
+          <th class="col-fill">Applicable</th>
+          <th class="col-fill">Triage</th>
+          <th>Applies to</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-priority">1</td>
+          <td>Every control under a Guideline is marked <code>Not Applicable</code> in the baseline file</td>
+          <td><span class="pill no">No</span></td>
+          <td><span class="pill no">No Action</span></td>
+          <td>New and Updated</td>
+        </tr>
+        <tr>
+          <td class="col-priority">2</td>
+          <td>This specific row is marked <code>Not Applicable</code> in the baseline file</td>
+          <td><span class="pill no">No</span></td>
+          <td><span class="pill no">No Action</span> <span class="pill na">(mod only)</span></td>
+          <td>Updated and Rescinded</td>
+        </tr>
+        <tr>
+          <td class="col-priority">3</td>
+          <td>Row exists in baseline and is not flagged out-of-scope</td>
+          <td><span class="pill yes">Yes</span></td>
+          <td><span class="pill na">blank — reviewer decides</span></td>
+          <td>Updated and Rescinded</td>
+        </tr>
+        <tr>
+          <td class="col-priority">—</td>
+          <td>Brand-new control with no baseline entry and rule 1 doesn't apply</td>
+          <td><span class="pill na">blank</span></td>
+          <td><span class="pill na">blank</span></td>
+          <td>New</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout">Pre-fills are written into the downloaded Change Register (.xlsx) so reviewers start from a structured baseline rather than a blank sheet. The Applicable indicator is shown read-only in the browser dashboard. The full Triage pre-fill is in the downloaded register only. Both are suggestions — the reviewer must read each control and confirm or override every pre-fill in the downloaded file before the register is shared.</div>
+  </details>
+
+  <details class="method-details">
+    <summary>Known limitations and edge cases</summary>
+    <ul>
+      <li><b>Column layout assumptions.</b> The tool assumes the CCM and SSP-A use the column headers in use at the time of publication (<i>Identifier</i>, <i>Revision</i>, <i>Updated</i>, <i>Guideline</i>, <i>Topic</i>, <i>Provider Responsibility</i>, <i>Implementation Status</i>, etc.) and maps common variants automatically. Identifiers are normalised so minor formatting differences (extra spaces, non-standard hyphens, mixed case) match correctly. If ASD restructures the CCM, spot-check a few rows the first time you use it against a new quarter's release.</li>
+      <li><b>Sheet name convention.</b> The tool first tries to match sheets named "Controls…" or "Principles…", validated against required headers (<i>Identifier + Description + Guideline/Section</i> for controls; <i>Identifier + Description + Function</i> for principles). If no named match passes validation it falls back to content sniffing with the same header requirements. If neither pass finds a valid sheet, the file will be rejected.</li>
+      <li><b>Rescission + re-issue.</b> Occasionally ASD retires one ISM identifier and reintroduces the same requirement under a new identifier. The tool will flag the old ID as Rescinded and the new ID as New but will not connect them — the reviewer has to spot these pairs manually.</li>
+      <li><b>Pre-fill heuristics are typical-case.</b> The guideline-level out-of-scope rule reflects how most SSP-As are structured, but unusual ones (multi-tenant, hybrid, federal-vs-state splits) may need the pre-fills overridden more often. Sanity-check at least one guideline you expect to be in scope before trusting the register.</li>
+      <li><b>Essential Eight flagging.</b> The Essential 8 Maturity Level column is populated from the CCM's ML1/ML2/ML3 columns. Controls that do not map to Essential 8 are shown as "None".</li>
+      <li><b>Info and Pivot tabs are dropped.</b> If your baseline file has an <i>Info</i> / <i>Information</i> tab or a <i>Pivot</i> tab, the Updated baseline export drops them. Info tabs do not round-trip cleanly through the xlsx library; Pivot tabs would show <i>baseline-quarter</i> counts against the new controls. Re-create the pivot against the Updated baseline in Excel (<i>Insert → PivotTable</i>). Other user sheets and hidden sheets still pass through untouched.</li>
+      <li><b>Freeze panes are not preserved.</b> The underlying library (xlsx-js-style) does not write frozen rows. Apply it manually in Excel after download (<i>View → Freeze Top Row</i>).</li>
+      <li><b>Sensitivity labels (MIP / AIP) and DRM.</b> Real-world SSP-As are often protected with Microsoft Purview / Azure Information Protection labels, Microsoft Information Protection encryption, or third-party DRM. The tool can only parse an unprotected <code>.xlsx</code> — if the file is labelled or encrypted, browser <code>FileReader</code> returns ciphertext and the parse will fail with a cryptic error. <b>Before uploading</b>, open your SSP-A in Excel, remove the sensitivity label (or downgrade it to an unprotected equivalent) and save a fresh copy, then feed <i>that</i> copy to the tool. Re-apply the label on your original after the review. Because processing is entirely client-side, the unlabelled copy never leaves your machine.</li>
+      <li><b>Password-protected or macro-enabled workbooks.</b> Password-protected <code>.xlsx</code>, <code>.xlsm</code> and <code>.xlsb</code> files are not supported — remove the password or convert to a plain <code>.xlsx</code> before uploading.</li>
+    </ul>
+  </details>
+
+  <details class="method-details">
+    <summary>Disclaimer and limitation of liability</summary>
+    <p style="font-size:13px; margin: 8px 0 4px;">This tool is provided on an <b>&ldquo;as is&rdquo;</b> and <b>&ldquo;as available&rdquo;</b> basis, without warranty of any kind. The output is a <b>decision-support aid, not professional, legal, compliance, assurance or IRAP advice</b>. You remain solely responsible for reviewing each change, confirming every pre-fill, and ensuring the final artefacts meet your organisation&rsquo;s assurance, accreditation and record-keeping obligations. To the maximum extent permitted by law, <b>in no event shall Cybernion be liable</b> for any direct, indirect, incidental, special, consequential or punitive damages arising from your use of this tool.</p>
+  </details>
+
+  <details class="method-details">
+    <summary>Security and transparency</summary>
+    <p style="margin: 8px 0 6px;">This is a static, client-side web tool with no backend, no account, and no server-side processing. The HTML file contains the application source; bundled workbook and PDF assets and pinned JavaScript libraries are loaded as static resources. Everything runs in your browser.</p>
+    <ul style="padding-left:22px; margin:8px 0 10px;">
+      <li><b>No data leaves your machine.</b> Your SSP-A, CCM, and all inputs are processed entirely in-browser. Nothing is transmitted to any server &mdash; not even Cybernion&rsquo;s. Apart from loading the pinned JavaScript libraries and the bundled CCM and ISM Changes PDF, your uploaded files and entered data are not transmitted anywhere.</li>
+      <li><b>Third-party libraries.</b> Four open-source JavaScript libraries are loaded at startup: <a href="https://github.com/gitbrent/xlsx-js-style" target="_blank" rel="noopener">xlsx-js-style v1.2.0</a> (Excel read/write) from jsDelivr, <a href="https://mozilla.github.io/pdf.js/" target="_blank" rel="noopener">PDF.js v3.11.174</a> (PDF parsing) from Cloudflare CDN, <a href="https://www.chartjs.org/" target="_blank" rel="noopener">Chart.js v4.4.4</a> (ISM Version Compare charts) from jsDelivr, and <a href="https://chartjs-plugin-datalabels.netlify.app/" target="_blank" rel="noopener">chartjs-plugin-datalabels v2.2.0</a> (chart data labels) from jsDelivr. All four are version-pinned with SHA-384 Subresource Integrity (SRI) hashes — the browser will refuse to execute any file that does not match the pinned hash. The PDF.js worker is loaded as a Web Worker (not a script tag) so browser-native SRI does not apply; the tool fetches it, verifies its SHA-384 hash in JavaScript before use, and rejects any mismatch. A fifth library, <a href="https://github.com/101arrowz/fflate" target="_blank" rel="noopener">fflate v0.8.2</a> (a small, zero-dependency ZIP library, MIT licensed), is not loaded from any CDN — it is compiled directly into the application source at build time and used by the Create CCM tab to edit the spreadsheet losslessly, so dropdown lists and all other workbook features are preserved.</li>
+      <li><b>Vulnerability scanning.</b> This html tool and all four JavaScript libraries were scanned against public vulnerability databases prior to release. No known vulnerabilities were identified at the versions pinned above.</li>
+      <li><b>Static resource review.</b> The tool and its bundled assets were reviewed as static resources prior to publication. No active content, no dynamic code evaluation, and no third-party tracking scripts are present.</li>
+      <li><b>Source transparency.</b> The application source is contained in the HTML file and can be inspected at any time in your browser&rsquo;s developer tools or by opening the file in a text editor. Bundled assets (workbooks, PDF) and JavaScript libraries are separate static resources loaded at runtime.</li>
+      <li><b>Bundled file integrity.</b> Each time the tool loads, it computes SHA-256 hashes of the bundled CCM and ISM Changes PDF in your browser and compares them against known-good hashes embedded in the HTML at release time. A &ldquo;Verified&rdquo; result confirms the files served to you are byte-for-byte identical to the files tested by Cybernion. A CCM hash mismatch blocks the tool from proceeding — the PDF is enrichment only, so a PDF mismatch is flagged as a warning. The expected hashes are updated in the source with each quarterly release.</li>
+    </ul>
+    <p style="font-size:12px; color:var(--text-muted);">If you identify a security concern, please <a href="https://cybernion.com.au/contact/" target="_blank" rel="noopener">Contact Us</a>.</p>
+  </details>
+
+  <details class="method-details">
+    <summary>Licence and attribution</summary>
+    <p class="fineprint" style="margin: 8px 0 4px;">
+      &copy; 2026 <a href="https://cybernion.com.au/" target="_blank" rel="noopener">Cybernion</a>. All rights reserved. This tool is provided free of charge for use by security practitioners. No part of this tool may be reproduced, redistributed, or used to create derivative works without prior written permission from Cybernion. &ldquo;ISM&rdquo;, &ldquo;Cloud Controls Matrix&rdquo;, &ldquo;Essential Eight&rdquo;, &ldquo;IRAP&rdquo; and related terms refer to work published by the Australian Signals Directorate / ACSC. This tool is an independent utility and is <b>not endorsed by, affiliated with, or sponsored by</b> ASD, ACSC or the Australian Government.
+    </p>
+  </details>
+</section>
+</details>
+
+</div><!-- end #tab2-panel -->
+
+<!-- ========== TAB 3: ISM VERSION COMPARE ========== -->
+<div id="tab3-panel" role="tabpanel" aria-labelledby="tab-btn-3" class="hidden">
+
+<section>
+  <h2>ISM Version Compare</h2>
+  <p style="font-size:13px;color:var(--text-muted);margin:0 0 10px;">Compare any two historical ISM CCM versions. New, Updated, and Rescinded controls and principles are computed using the same engine as the quarterly review tab.</p>
+  <div class="callout" style="margin-bottom:14px;">⚠ <strong>Results may differ from the SSP-A Update tool.</strong> The ISM Version Compare tool compares unmodified CCM releases as published by ASD. The SSP-A Update tool compares against your working baseline, which may have been manually edited since it was generated.</div>
+  <div class="cmp-picker-row">
+    <div>
+      <label for="cmp-baseline-sel">Baseline (older) <span class="req-mark" aria-hidden="true">*</span></label>
+      <select id="cmp-baseline-sel" disabled><option value="">Loading versions…</option></select>
+    </div>
+    <div>
+      <label for="cmp-current-sel">Current (newer) <span class="req-mark" aria-hidden="true">*</span></label>
+      <select id="cmp-current-sel" disabled><option value="">Loading versions…</option></select>
+    </div>
+    <div style="flex:0 0 auto; display:flex; gap:8px; align-items:flex-end;">
+      <button class="secondary" id="btn-swap-versions" title="Swap baseline and current versions" style="margin-bottom:1px; font-size:16px; padding:7px 10px;" disabled>⇄</button>
+      <button class="primary" id="btn-compare" disabled style="margin-top:0;">Compare</button>
+    </div>
+  </div>
+  <div id="cmp-status" class="validation-note hidden"></div>
+</section>
+
+<div id="cmp-results" class="hidden">
+
+  <!-- Download panel -->
+  <div class="download-panel">
+    <span class="dl-title">Downloads</span>
+    <button class="big-dl" id="btn-cmp-export"><span class="icon">⬇</span> Export Compare Register (.xlsx)</button>
+    <p class="dl-auto-notice">Generates a workbook with Summary, Controls, Principles, and Methodology sheets.</p>
+  </div>
+
+  <!-- Stats dashboard -->
+  <section>
+    <h2>Summary</h2>
+    <div class="meta-bar" id="cmp-meta"></div>
+    <div id="cmp-group-controls" class="stats-group">
+      <h3>Controls <span class="total"><span class="n">0</span><span class="u">changes</span></span></h3>
+      <div class="cards" id="cmp-cards-controls"></div>
+    </div>
+    <div id="cmp-group-principles" class="stats-group" style="margin-top:14px;">
+      <h3>Principles <span class="total"><span class="n">0</span><span class="u">changes</span></span></h3>
+      <div class="cards" id="cmp-cards-principles"></div>
+    </div>
+  </section>
+
+  <!-- Charts -->
+  <section>
+    <h2>Visual Summary</h2>
+    <div class="cmp-charts-row">
+      <div class="cmp-chart-box">
+        <h3>Changes by Guideline (Controls)</h3>
+        <div class="cmp-chart-bar"><canvas id="cmp-bar-chart"></canvas></div>
+      </div>
+      <div class="cmp-chart-box">
+        <h3>Change Type Distribution</h3>
+        <div class="cmp-chart-donut"><canvas id="cmp-donut-chart"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filters + register -->
+  <section>
+    <h2>Change Register</h2>
+    <div class="filter-bar">
+      <div>
+        <label for="cmp-filter-kind">Kind</label>
+        <select id="cmp-filter-kind">
+          <option value="all">All</option>
+          <option value="control">Controls</option>
+          <option value="principle">Principles</option>
+        </select>
+      </div>
+      <div>
+        <label for="cmp-filter-change">Change type</label>
+        <select id="cmp-filter-change">
+          <option value="all">All</option>
+          <option value="New">New</option>
+          <option value="Updated">Updated</option>
+          <option value="Rescinded">Rescinded</option>
+        </select>
+      </div>
+      <div>
+        <label for="cmp-filter-guideline">Guideline</label>
+        <select id="cmp-filter-guideline"><option value="all">All</option></select>
+      </div>
+      <div>
+        <label for="cmp-filter-topic">Topic</label>
+        <select id="cmp-filter-topic"><option value="all">All</option></select>
+      </div>
+      <div>
+        <label for="cmp-filter-search">Search</label>
+        <input type="text" id="cmp-filter-search" class="search" placeholder="ID, guideline, topic, text…" />
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="register" aria-label="Compare change register">
+        <thead>
+          <tr>
+            <th class="col-id">ISM ID</th>
+            <th class="col-change">Change</th>
+            <th class="col-guideline">Guideline / Section</th>
+            <th class="col-topic">Topic</th>
+            <th class="col-appl">Applicability / ML</th>
+            <th class="col-text">Description</th>
+          </tr>
+        </thead>
+        <tbody id="cmp-register-body"></tbody>
+      </table>
+      <div id="cmp-register-empty" class="empty-state hidden">No changes match your filters.</div>
+    </div>
+  </section>
+
+</div><!-- end #cmp-results -->
+
+</div><!-- end #tab3-panel -->
+
+
+</main>
+
+<footer class="cyb-footer" role="contentinfo" aria-label="Cybernion">
+  <div class="cyb-footer-inner">
+  <a href="https://cybernion.com.au/" target="_blank" rel="noopener" aria-label="Cybernion home">
+    <img id="cyb-footer-logo" class="cyb-footer-logo" alt="Cybernion" />
+  </a>
+  <div class="cyb-footer-center">
+    <span>© 2026 Cybernion. All rights reserved</span>
+    <a href="https://cybernion.com.au/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>
+    <a href="https://cybernion.com.au/website-terms-of-use" target="_blank" rel="noopener">Terms of Service</a>
+  </div>
+  <div class="cyb-footer-social">
+    <a href="https://twitter.com/cybernionaus" target="_blank" rel="noopener" aria-label="X / Twitter">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.262 5.623zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    </a>
+    <a href="https://www.linkedin.com/company/cybernion" target="_blank" rel="noopener" aria-label="LinkedIn">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+    </a>
+    <a href="https://www.youtube.com/@cybernionaus" target="_blank" rel="noopener" aria-label="YouTube">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+    </a>
+  </div>
+  </div><!-- end .cyb-footer-inner -->
+</footer>
+
+<!-- ========== STAKEHOLDER-COMMUNICATION DRAFT MODAL ==========
+     Plain-English note generated from the delta + reviewer triage state, shown
+     in an editable textarea so the user can tweak and then copy/paste it into
+     Slack / email. No auto-send. -->
+<div class="modal-overlay hidden" id="stakeholder-overlay" role="dialog" aria-modal="true" aria-labelledby="stakeholder-title">
+  <div class="modal stakeholder-modal">
+    <div class="modal-toolbar no-print">
+      <strong id="stakeholder-title">Stakeholder-communication draft</strong>
+      <span class="modal-toolbar-spacer"></span>
+      <button class="modal-btn" id="btn-copy-stakeholder" title="Copy the note to clipboard.">Copy</button>
+      <button class="modal-btn" id="btn-regenerate-stakeholder" title="Re-generate the stakeholder note from the current delta.">Regenerate</button>
+      <button class="modal-btn" id="btn-close-stakeholder" aria-label="Close">Close</button>
+    </div>
+    <div class="modal-body">
+      <p class="hint" style="margin-top:0">Draft below. Edit freely, then Copy to paste into email or chat. The text reflects the dashboard.</p>
+      <textarea id="stakeholder-text" aria-label="Editable stakeholder-note draft"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- Dependencies loaded here (end of body) so they do not block initial render.
+     Integrity hashes pin each file to the exact version tested by Cybernion. -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"
+        integrity="sha384-OUW9euuUyxyHcAhTqbhI+Iyb8LMssXt/cpz0yXhs9UWG2/R/uaWdakx/4cfww7Vb"
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"
+        integrity="sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e"
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+<!-- Chart.js — used by Tab 3 ISM Version Compare (bar + donut charts). -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
+        integrity="sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt"
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"
+        integrity="sha384-y49Zu59jZHJL/PLKgZPv3k2WI9c0Yp3pWB76V8OBVCb0QBKS8l4Ff3YslzHVX76Y"
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+
+
+</body>
+</html>

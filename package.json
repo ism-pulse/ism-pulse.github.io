@@ -1,0 +1,20 @@
+{
+  "name": "irap-pulse",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "IRAP Pulse — ISM quarterly change review tool (build tooling)",
+  "scripts": {
+    "build":            "node build.mjs",
+    "typecheck":        "tsc --noEmit",
+    "test":             "vitest run",
+    "test:watch":       "vitest",
+    "test:integration": "vitest run --config vitest.integration.ts",
+    "check":            "tsc --noEmit && vitest run"
+  },
+  "devDependencies": {
+    "esbuild":    "^0.25.0",
+    "typescript": "^5.8.0",
+    "vitest":     "^3.0.0"
+  }
+}

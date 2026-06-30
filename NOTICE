@@ -1,0 +1,60 @@
+IRAP Pulse
+Copyright © 2026 Cybernion <https://cybernion.com.au/>
+
+Built by Gaurav Vikash <https://www.linkedin.com/in/gauravvikash/>
+
+---
+
+Third-party components loaded at runtime:
+
+- xlsx-js-style v1.2.0
+  Apache Licence 2.0 — © SheetJS / gitbrent
+  https://github.com/gitbrent/xlsx-js-style
+  Loaded from: https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js
+  SRI: sha384-OUW9euuUyxyHcAhTqbhI+Iyb8LMssXt/cpz0yXhs9UWG2/R/uaWdakx/4cfww7Vb
+
+- pdf.js v3.11.174
+  Apache Licence 2.0 — © Mozilla Foundation
+  https://github.com/mozilla/pdf.js
+  Loaded from: https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js
+  SRI: sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e
+
+- Chart.js v4.4.4
+  MIT Licence — © Chart.js Contributors
+  https://github.com/chartjs/Chart.js
+  Loaded from: https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js
+  SRI: sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt
+
+- chartjs-plugin-datalabels v2.2.0
+  MIT Licence — © Jerome Chua
+  https://github.com/chartjs/chartjs-plugin-datalabels
+  Loaded from: https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js
+  SRI: sha384-y49Zu59jZHJL/PLKgZPv3k2WI9c0Yp3pWB76V8OBVCb0QBKS8l4Ff3YslzHVX76Y
+
+All four runtime libraries are pinned to exact versions with Subresource Integrity (SRI)
+hashes. The browser will refuse to execute any library if the CDN serves a modified file.
+
+---
+
+Third-party component compiled into the application bundle:
+
+- fflate v0.8.2
+  MIT Licence — © Arjun Barrett
+  https://github.com/101arrowz/fflate
+  Vendored at: src/vendor/fflate.js
+  This library is not loaded from any CDN. It is compiled directly into the
+  application bundle at build time and used for lossless .xlsx editing (ZIP/XML
+  level cell value edits that preserve dropdowns, styles and workbook structure).
+
+---
+
+Each third-party component retains its own copyright and licence.
+IRAP Pulse does not claim authorship of those components.
+
+---
+
+"ISM", "Cloud Controls Matrix", "Essential Eight", "IRAP" and related terms
+refer to work published by the Australian Signals Directorate / Australian
+Cyber Security Centre. IRAP Pulse is an independent utility and is not
+endorsed by, affiliated with, or sponsored by ASD, ACSC or the Australian
+Government.

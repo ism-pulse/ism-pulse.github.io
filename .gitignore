@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Archive (v1 source — delete manually after deploying v2)
+archive/
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+*.swp
